@@ -1,0 +1,11 @@
+eclipse.preferences.version=1
+encoding//src/gather/adminx.py=utf-8
+encoding//src/gather/dbutils.py=utf-8
+encoding//src/gather/models.py=utf-8
+encoding//src/gather/scheduler.py=utf-8
+encoding//src/gather/script.py=utf-8
+encoding//src/gather/urls.py=utf-8
+encoding//src/gather/utils.py=utf-8
+encoding//src/gather/views.py=utf-8
+encoding//src/manage.py=utf-8
+encoding//src/weixinarticle/settings.py=utf-8
