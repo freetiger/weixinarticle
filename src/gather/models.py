@@ -6,7 +6,43 @@ Created on 2014年10月20日
 '''
 from django.db import models
 
+class ImportWeixinInfo(models.Model):
+    weixin_names = models.TextField(verbose_name='微信名，每一行一个')
+    create_date = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')     
+    
+    def save(self):
+        from gather.script import search_weixin_info
+        weixin_name_list = self.weixin_names.splitlines()
+        for weixin_name in weixin_name_list:
+            weixin_infos = search_weixin_info(weixin_name)
+            for weixin_info in weixin_infos:
+                filterWeixinInfo = FilterWeixinInfo()
+                filterWeixinInfo.keyword = weixin_name
+                filterWeixinInfo.weixin_name = weixin_info[0]
+                filterWeixinInfo.weixin_no = weixin_info[1]
+                filterWeixinInfo.openid = weixin_info[2]
+                filterWeixinInfo.save()
+        
+        super(ImportWeixinInfo, self).save()
+    
+    class Meta:
+        ordering = ['-create_date']
+        verbose_name='导入微信' 
+        verbose_name_plural='导入微信'
 
+class FilterWeixinInfo(models.Model):
+    keyword = models.TextField(verbose_name='关键字')
+    weixin_name = models.CharField(blank=True, null=True, max_length=256, verbose_name='微信名')
+    weixin_no = models.CharField(blank=True, null=True, max_length=256, verbose_name='微信号')
+    openid = models.CharField(blank=True, null=True, max_length=256, verbose_name='微信openid')
+    create_date = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')     
+    
+    class Meta:
+        ordering = ['-create_date']
+        verbose_name='筛选微信' 
+        verbose_name_plural='筛选微信'
+        
+        
 class WeixinInfo(models.Model):
     weixin_name = models.CharField(max_length=256, verbose_name='微信名')
     weixin_no = models.CharField(blank=True, max_length=256, verbose_name='微信号')

@@ -5,6 +5,7 @@ Created on 2015年1月12日
 @author: heyuxing
 '''
 import urllib2, cookielib, urllib
+import time
 
 class HTTPRefererProcessor(urllib2.BaseHandler):
     def __init__(self):
@@ -30,6 +31,25 @@ class ErrorHandler(urllib2.HTTPDefaultErrorHandler):
         result = urllib2.HTTPError(req.get_full_url(), code, msg, headers, fp)  
         result.status = code  
         return result
+    
+'''
+移除html标签，特别的：br标签替换成一个空格
+'''
+def remove_tag(page_src,omit_tag):
+    chunk_list = []
+    tag_head = "<"+omit_tag
+    b_pos = page_src.find(tag_head)
+    e_pos = 0
+    while b_pos>=0 and e_pos>=0:
+        if omit_tag.startswith("br"):
+            chunk_list.append(page_src[e_pos:b_pos]+" ")
+        else:
+            chunk_list.append(page_src[e_pos:b_pos])
+        e_pos = page_src.find(">",b_pos)+1
+        b_pos = page_src.find(tag_head,e_pos)
+    if b_pos == -1 and e_pos >=0:
+        chunk_list.append(page_src[e_pos:])
+    return ''.join(chunk_list)
 
 '''
 URL特殊字符转义
@@ -44,9 +64,9 @@ inUrl：请求链接
 post_datas：post数据
 inUrl前缀做判断：如果是文件则读取文件内容返回，如果是文本内容则直接返回该内容，如果是url则返回该url应答页面的内容。
 '''
-def getUrlContent(inUrl,post_datas={}):
-    import time
-    time.sleep(0.5)
+def getUrlContent(inUrl,post_datas={}, sleep_time=0):
+    if sleep_time>0:
+        time.sleep(sleep_time)
     cj = cookielib.CookieJar()
     opener = urllib2.build_opener(
             urllib2.HTTPCookieProcessor(cj),

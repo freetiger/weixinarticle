@@ -90,11 +90,4 @@ USE_TZ = False
 
 STATIC_URL = '/static/'
 
-# #定时任务启动
-# from apscheduler.schedulers.background import BackgroundScheduler
-# from gather.scheduler import say_hello
-# scheduler = BackgroundScheduler()
-# scheduler.add_job(say_hello, 'cron', hour='0-23', second=3)
-# scheduler.start()
-
 
