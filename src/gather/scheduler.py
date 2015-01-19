@@ -6,20 +6,23 @@ https://bitbucket.org/agronholm/apscheduler/src/e15559237256?at=master
 @author: heyuxing
 '''
 from apscheduler.schedulers.background import BackgroundScheduler
+from gather.models import WeixinInfo
+from gather.script import scan_article
 import datetime
 import time
 import logging
 logging.basicConfig()
 
-
-def say_hello():
-    print "Hello World:"+str(datetime.datetime.now())
-
-
-if __name__ == '__main__':
+def scan_all_article():
+    weixinInfoList = WeixinInfo.objects.all()
+    for weixinInfo in weixinInfoList:
+        scan_article(weixin_info_id=weixinInfo.pk)
+        
+def scheduler_scan_all_article():
+    print "scheduler_scan_all_article is start!"
     #定时任务启动
     scheduler = BackgroundScheduler()
-    scheduler.add_job(say_hello, 'cron', hour='0-23', second=3)
+    scheduler.add_job(scan_all_article, 'cron', hour='0-23', minute=50)
     scheduler.start()
     
     try:
@@ -27,7 +30,26 @@ if __name__ == '__main__':
         while True:
             time.sleep(2)
     except (KeyboardInterrupt, SystemExit):
-        scheduler.shutdown()  # Not strictly necessary if daemonic mode is enabled but should be done if possible
+        scheduler.shutdown()  
+
+
+def say_hello():
+    print "Hello World:"+str(datetime.datetime.now())
+
+
+if __name__ == '__main__':
+    scheduler_scan_all_article()
+#     #定时任务启动
+#     scheduler = BackgroundScheduler()
+#     scheduler.add_job(say_hello, 'cron', hour='0-23', minute=30)
+#     scheduler.start()
+#     
+#     try:
+#         # This is here to simulate application activity (which keeps the main thread alive).
+#         while True:
+#             time.sleep(2)
+#     except (KeyboardInterrupt, SystemExit):
+#         scheduler.shutdown()  # Not strictly necessary if daemonic mode is enabled but should be done if possible
 
 
 

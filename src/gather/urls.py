@@ -10,6 +10,7 @@ from gather import views
 urlpatterns = patterns('',
     url(r'^scan_article/(?P<weixin_info_id>\d+)/$', views.scan_article, name='scan_article'),
     url(r'^article_show/(?P<weixin_article_id>\d+)/$', views.article_show, name='article_show'),
+    url(r'^scheduler/$', views.scheduler, name='scheduler'),
 )
 
 

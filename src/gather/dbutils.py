@@ -8,6 +8,7 @@ Created on 2015年1月14日
 import datetime
 import MySQLdb
 from gather.models import WeixinInfo
+import time
 
 def getConnect():
     host = 'localhost'
@@ -18,10 +19,10 @@ def getConnect():
     charset="utf8"
     return MySQLdb.connect(host=host, port=port, db=database,user=user,passwd=password,charset=charset)
 
-def saveWeixinArticle(weixin_info_id, title, url, content):
+def saveWeixinArticle(weixin_info_id, title, url, content, publish_date):
     conn = getConnect()
     cur = conn.cursor()
-    cur.execute("insert into gather_weixinarticle(weixin_info_id,title, url, content, create_date) values (%s,%s,%s,%s,%s)" , (weixin_info_id, title, url, content, datetime.datetime.now()))
+    cur.execute("insert into gather_weixinarticle(weixin_info_id,title, url, content, publish_date, create_date) values (%s,%s,%s,%s,%s,%s)" , (weixin_info_id, title, url, content, publish_date, datetime.datetime.now()))
     conn.commit()
     cur.close()
     conn.close()
@@ -111,6 +112,10 @@ def getWeixinInfoList(id=None, weixin_name=None, weixin_no=None, openid=None, of
 
 if __name__ == "__main__" :
     #getWeixinInfoList(id=1)
-    print getWeixinArticleUrls(weixin_info_id=1)
+    #print getWeixinArticleUrls(weixin_info_id=1)
+    
+    t=time.strptime('2014-3-7','%Y-%m-%d')
+    print time.strftime('%Y-%m-%d', t)
+    
 
 

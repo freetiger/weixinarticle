@@ -9,6 +9,7 @@ import xadmin
 from xadmin.views.base import CommAdminView
 
 from gather.models import FilterWeixinInfo, ImportWeixinInfo, WeixinInfo, WeixinArticle
+from plugins.listaction import AddWeixinNoAction
 
 
 # from xadmin.plugins.inline import Inline
@@ -44,14 +45,17 @@ class BaseAdmin(object):
  
 #微信列表
 class ImportWeixinInfoAdmin(BaseAdmin):
-    list_display = ('weixin_names', 'create_date', )
+    list_display = ('weixin_names', 'num', 'is_all', 'create_date', )
+    #操作列表
+    list_operate=['<a href="/gather/filterweixininfo/?_p_import_weixin_info__id__exact={{pk}}">微信号列表</a>', ]
        
 #微信列表
 class FilterWeixinInfoAdmin(BaseAdmin):
-    list_display = ('keyword', 'weixin_name', 'weixin_no', 'openid', 'create_date', )
+    list_display = ('import_weixin_info', 'keyword', 'weixin_name', 'weixin_no', 'openid', 'create_date', )
     #设置搜索框和其模糊搜索的范围
     search_fields = ('keyword', 'weixin_name', 'weixin_no', 'openid',) 
     list_editable = ('weixin_name', 'weixin_no', 'openid',  )
+    actions = [AddWeixinNoAction, ]
     
 #微信列表
 class WeixinInfoAdmin(BaseAdmin):
@@ -63,38 +67,18 @@ class WeixinInfoAdmin(BaseAdmin):
     list_operate=['<a href="/gather/scan_article/{{pk}}/" target="_blank">执行</a>'
                   , '<a href="/gather/weixinarticle/?_p_weixin_info__id__exact={{pk}}">文章列表</a>', ]
     
-    def get_list_queryset(self):
-        queryset = super(WeixinInfoAdmin, self).get_list_queryset()
-        print queryset,type(queryset),type(queryset[0])
-        return queryset
-#         for item in queryset:
-#             print item.weixin_name
-#             item.weixin_name="heyuxing"
-#         for item in queryset:
-#             print item.weixin_name
-# #         if len(queryset)==0:
-# #             from gather.script import search_weixin_info
-# #             weixin_infos = search_weixin_info("")
-# #             for weixin_info in weixin_infos:
-# #                 weixinInfo = WeixinInfo()
-# #                 weixinInfo.weixin_name = weixin_info[0]
-# #                 weixinInfo.weixin_no = weixin_info[1]
-# #                 weixinInfo.openid = weixin_info[2]
-# #                 queryset.append(weixinInfo)
-# #             print weixin_infos
-#         return queryset
 
 #微信列表
 class WeixinArticleAdmin(BaseAdmin):
-    list_display = ('weixin_info', 'title', 'create_date', )
+    list_display = ('weixin_info', 'title', 'publish_date', 'create_date', )
     #设置搜索框和其模糊搜索的范围
     search_fields = ('weixin_info.weixin_name', 'weixin_info.weixin_no', 'weixin_info.openid','title' ) 
     list_editable = ('title', )
     #操作列表
     list_operate=['<a href="/gather/article_show/{{pk}}/" target="_blank">查看文章</a>', ]
 
-xadmin.site.register(FilterWeixinInfo, FilterWeixinInfoAdmin)
 xadmin.site.register(ImportWeixinInfo, ImportWeixinInfoAdmin)
+xadmin.site.register(FilterWeixinInfo, FilterWeixinInfoAdmin)
 xadmin.site.register(WeixinInfo, WeixinInfoAdmin)
 xadmin.site.register(WeixinArticle, WeixinArticleAdmin)
 

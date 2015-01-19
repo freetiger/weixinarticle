@@ -20,6 +20,12 @@ def article_show(request, weixin_article_id):
         return "未找到文章"
     else:
         return HttpResponse(weixinArticle.content)
+    
+def scheduler(request):
+    from gather.scheduler import scheduler_scan_all_article
+    scheduler_scan_all_article()#TODO
+    html = "<html><body>定时任务启动. </body></html>" 
+    return HttpResponse(html)
 
 
 
