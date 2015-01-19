@@ -19,7 +19,7 @@ def get_page_total(openid):
     page_current = 1
     param_retrieve_str = re.compile(r'"totalPages":(\d*),"page":(\d*)')
     while True:
-        page_src = utils.getUrlContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid="+openid+"&page="+str(page_current)+"&t="+time.time().repalce(".", "0"), sleep_time=1)
+        page_src = utils.getSogouContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid="+openid+"&page="+str(page_current), sleep_time=1)
         if page_src is None:
             is_end = True
             return 0
@@ -53,7 +53,7 @@ def get_article_list_urls(openid, page_total=1):
 def scan_article_list(article_list_urls):
     article_urls = []
     for article_list_url in article_list_urls:
-        page_src = utils.getUrlContent(article_list_url, sleep_time=1)
+        page_src = utils.getSogouContent(article_list_url, sleep_time=1)
         if page_src is None:
             is_end = True
             return []
@@ -80,17 +80,17 @@ def scan_article_list(article_list_urls):
 '''
 抓取微信weixin_info_id的文章内容，article_urls为文章标题title和链接url
 '''
-def scan_article_content(article_urls, weixin_info_id):
+def scan_article_content(article_urls, weixin_info_id, weixin_name, weixin_no, openid):
     count =0
     for article_url in article_urls:
         title = article_url.get("title")
         url = article_url.get("url")
         publish_date = article_url.get("publish_date")
-        content = utils.getUrlContent(url, sleep_time=1)
+        content = utils.getWeixinContent(url, sleep_time=1)
         if content is None:
             is_end = True
             return count
-        dbutils.saveWeixinArticle(weixin_info_id, title, url, content, publish_date)
+        dbutils.saveWeixinArticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date)
         count=count+1
     return count
 
@@ -125,13 +125,15 @@ def scan_article(weixin_info_id=None, openid=None, is_add=True):
         weixinInfoList = dbutils.getWeixinInfoList(openid=openid)
     for weixinInfo in weixinInfoList:
         weixin_info_id = weixinInfo.id
+        weixin_name = weixinInfo.weixin_name
         openid = weixinInfo.openid
+        weixin_no = weixinInfo.weixin_no
         page_total = get_page_total(openid)
         article_list_urls = get_article_list_urls(openid, page_total)
         article_urls = scan_article_list(article_list_urls)
         if is_add:
             article_urls = article_urls_filter(article_urls, weixin_info_id)
-        update_num = scan_article_content(article_urls, weixin_info_id)
+        update_num = scan_article_content(article_urls, weixin_info_id, weixin_name, weixin_no, openid)
         #抓取时间和文章数更新
         dbutils.updateWeixinInfoById(id=weixin_info_id, last_scan_date=str(datetime.datetime.now()), update_num=update_num)
     #
@@ -145,7 +147,7 @@ def search_weixin_info(keyword, is_all=False):
     weixin_infos = []
     page_url = "http://weixin.sogou.com/weixin?type=1&"+urllib.urlencode({"query":keyword})
     while True:
-        page_src = utils.getUrlContent(page_url, sleep_time=1)
+        page_src = utils.getSogouContent(page_url, sleep_time=1)
         page_src = utils.remove_tag(page_src, "em")
         page_src = utils.remove_tag(page_src, "/em")
         page_src = utils.remove_tag(page_src, "!--red_beg--")
@@ -171,16 +173,30 @@ def search_weixin_info(keyword, is_all=False):
     
     return weixin_infos
 
+def get_xici_proxies():
+    proxies=[]
+    #国内透明代理IP
+    page_src = utils.gatherXici("http://www.xici.net.co/nt/1" )
+    regular_str = re.compile(r'<td>(\b(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\b)</td>[^<]*<td>(\d*)')
+    datas = regular_str.findall(page_src)
+    print page_src
+    for data in datas:
+        print data
+        proxies.append(data[0]+data[1])
+    print proxies
+    
+
 if __name__ == "__main__":   
     #scan_article(openid="oIWsFt-Atb62Noyz4nKX1nvrmFHQ")
     #print search_weixin_info("晓说", True)
 #     article_list_urls = ["http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt21qMCAR53L_nCd27iMBnOs&page=7", ]
 #     print scan_article_list(article_list_urls)
     #print utils.getUrlContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt-dFFZ9mZdL2K9OIZBi9oBg&page=32")
-    import time
-    print time.time()
-    print str(time.time()).replace(".","0")
-    print utils.getUrlContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt9FjqlkRSJGxc-a_1SMFSYo&page=1&t="+str(time.time()).replace(".","0"))
+#     import time
+#     print time.time()
+#     print str(time.time()).replace(".","0")
+#     print utils.getUrlContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt9FjqlkRSJGxc-a_1SMFSYo&page=1&t="+str(time.time()).replace(".","0"))
+    get_xici_proxies()
 
     
         

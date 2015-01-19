@@ -71,6 +71,9 @@ class WeixinInfo(models.Model):
         
 class WeixinArticle(models.Model):
     weixin_info = models.ForeignKey(WeixinInfo, verbose_name='微信号信息')
+    weixin_name = models.CharField(max_length=256, verbose_name='微信名')
+    openid = models.CharField(max_length=256, verbose_name='微信openid')
+    weixin_no = models.CharField(blank=True, max_length=256, verbose_name='微信号')
     title = models.CharField(max_length=256, verbose_name='文章标题')
     url = models.CharField(max_length=1024, verbose_name='文章源URL')
     content = models.TextField(verbose_name='文章内容')

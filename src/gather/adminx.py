@@ -75,7 +75,7 @@ class WeixinArticleAdmin(BaseAdmin):
     search_fields = ('weixin_info.weixin_name', 'weixin_info.weixin_no', 'weixin_info.openid','title' ) 
     list_editable = ('title', )
     #操作列表
-    list_operate=['<a href="/gather/article_show/{{pk}}/" target="_blank">查看文章</a>', ]
+    list_operate=['<a href="/gather/article_show/{{pk}}/" target="_blank">查看文章</a>', '<a href="{{url}}" target="_blank">查看来源</a>',]
 
 xadmin.site.register(ImportWeixinInfo, ImportWeixinInfoAdmin)
 xadmin.site.register(FilterWeixinInfo, FilterWeixinInfoAdmin)

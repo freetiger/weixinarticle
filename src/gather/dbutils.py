@@ -19,10 +19,10 @@ def getConnect():
     charset="utf8"
     return MySQLdb.connect(host=host, port=port, db=database,user=user,passwd=password,charset=charset)
 
-def saveWeixinArticle(weixin_info_id, title, url, content, publish_date):
+def saveWeixinArticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date):
     conn = getConnect()
     cur = conn.cursor()
-    cur.execute("insert into gather_weixinarticle(weixin_info_id,title, url, content, publish_date, create_date) values (%s,%s,%s,%s,%s,%s)" , (weixin_info_id, title, url, content, publish_date, datetime.datetime.now()))
+    cur.execute("insert into gather_weixinarticle(weixin_info_id, weixin_name, weixin_no, openid,title, url, content, publish_date, create_date) values (%s,%s,%s,%s,%s,%s)" , (weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, datetime.datetime.now()))
     conn.commit()
     cur.close()
     conn.close()
