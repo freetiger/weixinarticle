@@ -144,6 +144,18 @@ def get_proxies():
         return ""
     
 '''
+新闻社评：韩福东， 米糕新闻日记， 洞见 
+休闲旅行：周末做啥， 白菜价旅行 
+八卦娱乐：绝对八卦
+微信公众号
+'''
+    
+sogou_urllib2 = None
+weixin_urllib2 = None
+sogou_count = 0
+weixin_count = 0
+    
+'''
 移除html标签，特别的：br标签替换成一个空格
 '''
 def remove_tag(page_src,omit_tag):
@@ -198,19 +210,16 @@ url：请求链接
 post_datas：post数据
 url前缀做判断：如果是文件则读取文件内容返回，如果是文本内容则直接返回该内容，如果是url则返回该url应答页面的内容。
 '''
-def getUrlContent(url, post_datas={}, sleep_time=0, proxies={}, headers={}):
+def getUrlContent(url, post_datas={}, sleep_time=0, proxies={}, headers={}, urllib2=None):
     if len(url)==0:
         return ""
     url = urlzhuanyi(url)
+    import random
+    sleep_time = random.uniform(2,5)
     if sleep_time>0:
         time.sleep(sleep_time)
-    if len(proxies)>0:
-        proxy_support = urllib2.ProxyHandler(proxies)  
-        opener = urllib2.build_opener(proxy_support, urllib2.HTTPHandler)
-    else:
-        cj = cookielib.CookieJar()
-        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj), HTTPRefererProcessor(), )
-    urllib2.install_opener(opener)
+    if urllib2 is None:
+        urllib2 = init_urllib2()
     
     if len(headers)==0:
         headers = {
@@ -221,7 +230,7 @@ def getUrlContent(url, post_datas={}, sleep_time=0, proxies={}, headers={}):
             "Accept-Charset":"gb2312,utf-8;q=0.7,*;q=0.7",
             "Connection": "Keep-Alive",
             "Cache-Control": "no-cache",
-            "Cookie":"skin=noskin; path=/; domain=.amazon.com; expires=Wed, 25-Mar-2009 08:38:55 GMT\r\nsession-id-time=1238569200l; path=/; domain=.amazon.com; expires=Wed Apr 01 07:00:00 2009 GMT\r\nsession-id=175-6181358-2561013; path=/; domain=.amazon.com; expires=Wed Apr 01 07:00:00 2009 GMT"
+            #"Cookie":"skin=noskin; path=/; domain=.amazon.com; expires=Wed, 25-Mar-2009 08:38:55 GMT\r\nsession-id-time=1238569200l; path=/; domain=.amazon.com; expires=Wed Apr 01 07:00:00 2009 GMT\r\nsession-id=175-6181358-2561013; path=/; domain=.amazon.com; expires=Wed Apr 01 07:00:00 2009 GMT"
         }
     req=urllib2.Request(url,headers=headers) #伪造request的header头，有些网站不支持，会拒绝请求;有些网站必须伪造header头才能访问
     htmlsrc = ""
@@ -240,6 +249,8 @@ def getUrlContent(url, post_datas={}, sleep_time=0, proxies={}, headers={}):
             response_headers = resp.headers.dict
             if response_headers.get("content-encoding")=="gzip":
                 htmlsrc = gunzip(htmlsrc)
+            elif response_headers.get("content-encoding") == "deflate":
+                htmlsrc = deflate(htmlsrc)
         else:
             print "ERROR: code="+str(code)+" url="+url
     except:
@@ -248,11 +259,34 @@ def getUrlContent(url, post_datas={}, sleep_time=0, proxies={}, headers={}):
 
     return htmlsrc
 
+def init_urllib2():
+    cj = cookielib.CookieJar()
+    if len(proxies)>0:
+        proxy_support = urllib2.ProxyHandler(proxies)  
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj), HTTPRefererProcessor(), proxy_support, urllib2.HTTPHandler)
+    else:
+        opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj), HTTPRefererProcessor(), )
+    urllib2.install_opener(opener)
+    return urllib2
+
 def gunzip(data):
     import gzip
     import StringIO
     data = StringIO.StringIO(data)
     gz = gzip.GzipFile(fileobj=data)
+    data = gz.read()
+    gz.close()
+    return data
+
+# zlib only provides the zlib compress format, not the deflate format;
+def deflate(data):
+    import zlib
+    import StringIO
+    data = StringIO.StringIO( data )
+    try:               # so on top of all there's this workaround:
+        gz = zlib.decompress(data, -zlib.MAX_WBITS)
+    except zlib.error:
+        gz = zlib.decompress(data)
     data = gz.read()
     gz.close()
     return data
@@ -267,12 +301,17 @@ def getSogouContent(url, post_datas={}, sleep_time=0, proxies={},):
         "Accept-Language":"zh-CN,zh;q=0.8,en;q=0.6,zh-TW;q=0.4",
         "Cache-Control":"max-age=0",
         "Connection":"keep-alive",
-        "Cookie":"CXID=8F8A8A2502CBBED58ED24FE011474E44; SUID=1EC5E76561110C0A5332C67600095CA6; SUV=1396594719216119; ssuid=7214764425; pgv_pvi=7991477248; SMYUV=1403240797197204; usid=Q9hUBRtYFZ9TSfqY; IPLOC=CN3100; SNUID=28F3D250363039CA19695F1B3616C952; sct=10; ABTEST=8|1421655123|v17",
+        #"Cookie":"CXID=8F8A8A2502CBBED58ED24FE011474E44; SUID=1EC5E76561110C0A5332C67600095CA6; SUV=1396594719216119; ssuid=7214764425; pgv_pvi=7991477248; SMYUV=1403240797197204; usid=Q9hUBRtYFZ9TSfqY; IPLOC=CN3100; SNUID=28F3D250363039CA19695F1B3616C952; sct=10; ABTEST=8|1421655123|v17",
         "Host":"weixin.sogou.com",
         "Referer":"http://weixin.sogou.com/",
         "User-Agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36",
     }
-    htmlsrc = getUrlContent(url, post_datas, sleep_time, proxies, headers)
+    global sogou_urllib2
+    if sogou_urllib2 is None:
+        sogou_urllib2 = init_urllib2()
+    htmlsrc = getUrlContent(url, post_datas, sleep_time, proxies, headers, sogou_urllib2)
+    sogou_count = sogou_count+1
+    print "sogou_count="+sogou_count
     return htmlsrc
 
 '''
@@ -282,17 +321,22 @@ def getSogouContent(url, post_datas={}, sleep_time=0, proxies={},):
 def getWeixinContent(url, post_datas={}, sleep_time=0, proxies={},):
     headers = {
         "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        #"Accept-Encoding":"gzip,deflate,sdch",
+        "Accept-Encoding":"gzip,deflate,sdch",
         "Accept-Language":"zh-CN,zh;q=0.8,en;q=0.6,zh-TW;q=0.4",
         "Cache-Control":"max-age=0",
         "Connection":"keep-alive",
-        "Cookie":"isNarrow=0; ts_refer=www.baidu.com/s; ts_uid=8624891305; RK=ENGzloj0GQ; pgv_pvi=1479056384; ptui_loginuin=378823253; sd_userid=63491421117303085; sd_cookie_crttime=1421117303085; qzone_check=378823253_1421632062; pt2gguin=o0378823253; uin=o0378823253; skey=@bLNo4s8gl; ptisp=ctc; ptcz=fe4f9a22997c7bb50ff6c978cd1260f36f4f9af2e2f6d844c201083801254492; aboutVideo_v=0; pgv_info=ssid=s8831846406; pgv_pvid=1597739945; o_cookie=378823253; isVideo_DC=0",
+        #"Cookie":"isNarrow=0; ts_refer=www.baidu.com/s; ts_uid=8624891305; RK=ENGzloj0GQ; pgv_pvi=1479056384; ptui_loginuin=378823253; sd_userid=63491421117303085; sd_cookie_crttime=1421117303085; qzone_check=378823253_1421632062; pt2gguin=o0378823253; uin=o0378823253; skey=@bLNo4s8gl; ptisp=ctc; ptcz=fe4f9a22997c7bb50ff6c978cd1260f36f4f9af2e2f6d844c201083801254492; aboutVideo_v=0; pgv_info=ssid=s8831846406; pgv_pvid=1597739945; o_cookie=378823253; isVideo_DC=0",
         "Host":"mp.weixin.qq.com",
         #"If-Modified-Since":"Mon, 19 Jan 2015 08:27:42 GMT",
         "Referer":"http://weixin.sogou.com/",
         "User-Agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36",
     }
-    htmlsrc = getUrlContent(url, post_datas, sleep_time, proxies, headers)
+    global weixin_urllib2
+    if weixin_urllib2 is None:
+        weixin_urllib2 = init_urllib2()
+    htmlsrc = getUrlContent(url, post_datas, sleep_time, proxies, headers, weixin_urllib2)
+    weixin_count = weixin_count+1
+    print "weixin_count="+weixin_count
     return htmlsrc
 
 '''
@@ -320,9 +364,9 @@ def gatherXici(url, post_datas={}, sleep_time=0, proxies={}, ):
     return "htmlsrc"
 
 if __name__ == "__main__":   
-    proxy = "183.207.232.193:8080"
-    page_src = getSogouContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt-Atb62Noyz4nKX1nvrmFHQ&page=1", proxies={"http":proxy})
-    print page_src
+#     proxy = "183.207.232.193:8080"
+#     page_src = getSogouContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt-Atb62Noyz4nKX1nvrmFHQ&page=1", proxies={"http":proxy})
+#     print page_src
 #     for item in range(100):
 #         proxy = get_proxies()
 #         print proxy
@@ -335,5 +379,11 @@ if __name__ == "__main__":
 #     page_src = getSogouContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt-Atb62Noyz4nKX1nvrmFHQ&page=1&t=1421236929826", {"http":proxies})
 #     print len(page_src)
 #     print page_src
+    import random
+    import time
+    t= random.uniform(3,5)
+    print t
+    time.sleep(t)
+    print t
     
     
