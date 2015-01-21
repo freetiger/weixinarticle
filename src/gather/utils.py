@@ -259,7 +259,7 @@ def getUrlContent(url, post_datas={}, sleep_time=0, proxies={}, headers={}, urll
 
     return htmlsrc
 
-def init_urllib2():
+def init_urllib2(proxies={}):
     cj = cookielib.CookieJar()
     if len(proxies)>0:
         proxy_support = urllib2.ProxyHandler(proxies)  
@@ -310,8 +310,9 @@ def getSogouContent(url, post_datas={}, sleep_time=0, proxies={},):
     if sogou_urllib2 is None:
         sogou_urllib2 = init_urllib2()
     htmlsrc = getUrlContent(url, post_datas, sleep_time, proxies, headers, sogou_urllib2)
+    global sogou_count
     sogou_count = sogou_count+1
-    print "sogou_count="+sogou_count
+    print "sogou_count="+str(sogou_count)
     return htmlsrc
 
 '''
@@ -335,8 +336,9 @@ def getWeixinContent(url, post_datas={}, sleep_time=0, proxies={},):
     if weixin_urllib2 is None:
         weixin_urllib2 = init_urllib2()
     htmlsrc = getUrlContent(url, post_datas, sleep_time, proxies, headers, weixin_urllib2)
+    global weixin_count
     weixin_count = weixin_count+1
-    print "weixin_count="+weixin_count
+    print "weixin_count="+str(weixin_count)
     return htmlsrc
 
 '''
@@ -379,11 +381,16 @@ if __name__ == "__main__":
 #     page_src = getSogouContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt-Atb62Noyz4nKX1nvrmFHQ&page=1&t=1421236929826", {"http":proxies})
 #     print len(page_src)
 #     print page_src
-    import random
-    import time
-    t= random.uniform(3,5)
-    print t
-    time.sleep(t)
-    print t
+#     import random
+#     import time
+#     t= random.uniform(3,5)
+#     print t
+#     time.sleep(t)
+#     print t
+    page_src = getUrlContent("http://mmbiz.qpic.cn/mmbiz/vMw2Wc6GmwEfleaKMISaQic1LtDvLkycwjT3QCYRP6sqAbBtD3wiba6T0q0brF7zbLkJLZFPMaKcpvTlqmTvq2VQ/0?tp=webp")
+    print len(page_src)
+    with open("testimage.jpg", "wb") as jpg:
+    #outputfile = open("testimage.jpg","wb")
+        jpg.write(page_src)
     
     

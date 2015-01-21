@@ -7,16 +7,16 @@ https://bitbucket.org/agronholm/apscheduler/src/e15559237256?at=master
 '''
 from apscheduler.schedulers.background import BackgroundScheduler
 from gather.models import WeixinInfo
-from gather.script import scan_article
+from gather.script import scan_article, dbutils
 import datetime
 import time
 import logging
 logging.basicConfig()
 
 def scan_all_article():
-    weixinInfoList = WeixinInfo.objects.all()
+    weixinInfoList = dbutils.getWeixinInfoList()
     for weixinInfo in weixinInfoList:
-        scan_article(weixin_info_id=weixinInfo.pk)
+        scan_article(weixin_info_id=weixinInfo.id)
         
 def scheduler_scan_all_article():
     print "scheduler_scan_all_article is start!"
@@ -38,7 +38,8 @@ def say_hello():
 
 
 if __name__ == '__main__':
-    scheduler_scan_all_article()
+    scan_all_article()
+    #scheduler_scan_all_article()
 #     #定时任务启动
 #     scheduler = BackgroundScheduler()
 #     scheduler.add_job(say_hello, 'cron', hour='0-23', minute=30)

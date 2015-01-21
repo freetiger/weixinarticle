@@ -78,6 +78,8 @@ class WeixinArticle(models.Model):
     url = models.CharField(max_length=1024, verbose_name='文章源URL')
     content = models.TextField(verbose_name='文章内容')
     publish_date = models.DateField(verbose_name='发布日期')
+    thumbnail_url = models.CharField(max_length=1024, verbose_name='缩略图源URL')
+    thumbnail_path = models.CharField(max_length=1024, verbose_name='缩略图服务器路径')
     create_date = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')
     
     def __unicode__(self):

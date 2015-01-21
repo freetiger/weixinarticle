@@ -90,7 +90,13 @@ def scan_article_content(article_urls, weixin_info_id, weixin_name, weixin_no, o
         if content is None:
             is_end = True
             return count
-        dbutils.saveWeixinArticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date)
+        regular_str = re.compile(r'(http://mmbiz.qpic.cn/mmbiz[^"]*)')
+        datas = regular_str.findall(content)
+        thumbnail_url = ""
+        thumbnail_path = ""
+        if len(datas)>0:
+            thumbnail_url = datas[0]
+        dbutils.saveWeixinArticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path)
         count=count+1
     return count
 
@@ -136,6 +142,7 @@ def scan_article(weixin_info_id=None, openid=None, is_add=True):
         update_num = scan_article_content(article_urls, weixin_info_id, weixin_name, weixin_no, openid)
         #抓取时间和文章数更新
         dbutils.updateWeixinInfoById(id=weixin_info_id, last_scan_date=str(datetime.datetime.now()), update_num=update_num)
+        return ""
     #
     return ""
 
