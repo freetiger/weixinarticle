@@ -1,4 +1,5 @@
 eclipse.preferences.version=1
+encoding//src/django_wsgi.py=utf-8
 encoding//src/gather/adminx.py=utf-8
 encoding//src/gather/dbutils.py=utf-8
 encoding//src/gather/models.py=utf-8
