@@ -152,8 +152,10 @@ def get_proxies():
     
 sogou_urllib2 = None
 weixin_urllib2 = None
+weixin_image_urllib2 = None
 sogou_count = 0
 weixin_count = 0
+weixin_image_count = 0
     
 '''
 移除html标签，特别的：br标签替换成一个空格
@@ -365,32 +367,44 @@ def gatherXici(url, post_datas={}, sleep_time=0, proxies={}, ):
     #htmlsrc = getUrlContent(url, post_datas, sleep_time, proxies, headers)
     return "htmlsrc"
 
-if __name__ == "__main__":   
-#     proxy = "183.207.232.193:8080"
-#     page_src = getSogouContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt-Atb62Noyz4nKX1nvrmFHQ&page=1", proxies={"http":proxy})
-#     print page_src
-#     for item in range(100):
-#         proxy = get_proxies()
-#         print proxy
-#         page_src = getSogouContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt-Atb62Noyz4nKX1nvrmFHQ&page=1&t=1421236929826", proxies={"http":proxy})
-#         print len(page_src)
-    #print getSogouContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt-Atb62Noyz4nKX1nvrmFHQ&page=1&t=1421236929826")
-    #print getWeixinContent("http://mp.weixin.qq.com/s?__biz=MzA5NDI5ODczNA==&mid=206354655&idx=2&sn=b22f21b1d06b78955d722f53a26fbebc&3rd=MzA3MDU4NTYzMw==&scene=6#rd")
-    #html = gatherXici("http://www.xici.net.co/nt/1")
-    #print get_proxies()
-#     page_src = getSogouContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt-Atb62Noyz4nKX1nvrmFHQ&page=1&t=1421236929826", {"http":proxies})
-#     print len(page_src)
-#     print page_src
-#     import random
-#     import time
-#     t= random.uniform(3,5)
-#     print t
-#     time.sleep(t)
-#     print t
-    page_src = getUrlContent("http://mmbiz.qpic.cn/mmbiz/vMw2Wc6GmwEfleaKMISaQic1LtDvLkycwjT3QCYRP6sqAbBtD3wiba6T0q0brF7zbLkJLZFPMaKcpvTlqmTvq2VQ/0?tp=webp")
-    print len(page_src)
-    with open("testimage.jpg", "wb") as jpg:
-    #outputfile = open("testimage.jpg","wb")
+
+def download_weixin_image(download_url, store_file, post_datas={}, sleep_time=0, proxies={},):
+    headers = {
+        "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Encoding":"gzip,deflate,sdch",
+        "Accept-Language":"zh-CN,zh;q=0.8,en;q=0.6,zh-TW;q=0.4",
+        "Cache-Control":"max-age=0",
+        "Connection":"keep-alive",
+        "Host":"mmbiz.qpic.cn",
+        #"If-Modified-Since":"Mon, 19 Jan 2015 08:27:42 GMT",
+        "Referer":"http://mp.weixin.qq.com/",
+        "User-Agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36",
+    }
+    global weixin_image_urllib2
+    if weixin_image_urllib2 is None:
+        weixin_image_urllib2 = init_urllib2()
+    download(download_url, store_file, "wb", post_datas, sleep_time, proxies, headers, weixin_image_urllib2)
+    global weixin_image_count
+    weixin_image_count = weixin_image_count+1
+    print "weixin_image_count="+str(weixin_image_count)
+
+def download(download_url, store_file, mode, post_datas={}, sleep_time=0, proxies={}, headers={}, urllib2=None):
+    page_src = getUrlContent(download_url, post_datas, sleep_time, proxies, headers, weixin_urllib2)
+    with open(store_file, mode) as jpg:
         jpg.write(page_src)
+        
+def thumbnail(infile, outfile, width, height):
+    import Image
+    try:
+        size = (width, height)
+        im = Image.open(infile)
+        im.thumbnail(size, Image.ANTIALIAS)
+        im.save(outfile, "JPEG")
+    except IOError:
+        print "cannot create thumbnail for '%s'" % infile
+
+if __name__ == "__main__":   
+    #download_weixin_image("http://mmbiz.qpic.cn/mmbiz/vMw2Wc6GmwEfleaKMISaQic1LtDvLkycwjT3QCYRP6sqAbBtD3wiba6T0q0brF7zbLkJLZFPMaKcpvTlqmTvq2VQ/0", "c:/weixin_image.jpg")
+    thumbnail("c:/weixin_image.jpg", "c:/weixin_image.thumbnail.jpg", 128,128)
     
     

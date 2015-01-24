@@ -5,6 +5,7 @@ Created on 2014年10月20日
 @author: hyx
 '''
 from django.db import models
+from DjangoUeditor.models import UEditorField
 
 class ImportWeixinInfo(models.Model):
     weixin_names = models.TextField(verbose_name='微信名，每一行一个')
@@ -76,7 +77,9 @@ class WeixinArticle(models.Model):
     weixin_no = models.CharField(blank=True, max_length=256, verbose_name='微信号')
     title = models.CharField(max_length=256, verbose_name='文章标题')
     url = models.CharField(max_length=1024, verbose_name='文章源URL')
-    content = models.TextField(verbose_name='文章内容')
+    #content = models.TextField(verbose_name='文章内容')
+    content=UEditorField(u'文章内容   ',width=600, height=300, toolbars="full", imagePath="", filePath="", upload_settings={"imageMaxSize":1204000},
+             settings={},command=None,blank=True)
     publish_date = models.DateField(verbose_name='发布日期')
     thumbnail_url = models.CharField(max_length=1024, verbose_name='缩略图源URL')
     thumbnail_path = models.CharField(max_length=1024, verbose_name='缩略图服务器路径')

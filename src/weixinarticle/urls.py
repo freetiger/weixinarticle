@@ -12,4 +12,5 @@ urlpatterns = patterns('',
     url(r'^gather/', include('gather.urls', namespace="gather")),
     url(r'^static/(?P<path>.*)$','django.views.static.serve',{'document_root':settings.STATIC_ROOT}),
     url(r'^media/(?P<path>.*)$','django.views.static.serve',{'document_root': settings.STATIC_ROOT}),
+    url(r'^ueditor/',include('DjangoUeditor.urls' )),
 )

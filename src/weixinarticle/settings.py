@@ -29,10 +29,6 @@ if socket.gethostname() == 'iZ23au1sj8vZ':
 else:
     DEBUG = True
     TEMPLATE_DEBUG = True
-    
-DEBUG = False
-TEMPLATE_DEBUG = False
-ALLOWED_HOSTS = ['*', ]
 
 # Application definition
 
@@ -46,6 +42,7 @@ INSTALLED_APPS = (
     'crispy_forms',
     'reversion',
     'gather',
+    'DjangoUeditor',
 )
 
 MIDDLEWARE_CLASSES = (
