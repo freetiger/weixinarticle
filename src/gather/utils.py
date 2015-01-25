@@ -387,11 +387,13 @@ def download_weixin_image(download_url, store_file, post_datas={}, sleep_time=0,
     global weixin_image_count
     weixin_image_count = weixin_image_count+1
     print "weixin_image_count="+str(weixin_image_count)
+    return store_file
 
 def download(download_url, store_file, mode, post_datas={}, sleep_time=0, proxies={}, headers={}, urllib2=None):
     page_src = getUrlContent(download_url, post_datas, sleep_time, proxies, headers, weixin_urllib2)
     with open(store_file, mode) as jpg:
         jpg.write(page_src)
+    return store_file
         
 def thumbnail(infile, outfile, width, height):
     import Image
@@ -405,6 +407,6 @@ def thumbnail(infile, outfile, width, height):
 
 if __name__ == "__main__":   
     #download_weixin_image("http://mmbiz.qpic.cn/mmbiz/vMw2Wc6GmwEfleaKMISaQic1LtDvLkycwjT3QCYRP6sqAbBtD3wiba6T0q0brF7zbLkJLZFPMaKcpvTlqmTvq2VQ/0", "c:/weixin_image.jpg")
-    thumbnail("c:/weixin_image.jpg", "c:/weixin_image.thumbnail.jpg", 128,128)
+    thumbnail("d:/weixin_image.jpg", "d:/weixin_image.thumbnail.jpg", 128,128)
     
     

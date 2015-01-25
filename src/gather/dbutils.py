@@ -22,10 +22,11 @@ def getConnect():
 def saveWeixinArticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path):
     conn = getConnect()
     cur = conn.cursor()
-    cur.execute("insert into gather_weixinarticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path, create_date) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" , (weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path, datetime.datetime.now()))
+    weixin_article_id = cur.execute("insert into gather_weixinarticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path, create_date) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" , (weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path, datetime.datetime.now()))
     conn.commit()
     cur.close()
     conn.close()
+    return weixin_article_id
     
 def getWeixinArticleUrls(weixin_info_id):
     conn = getConnect()
@@ -39,6 +40,34 @@ def getWeixinArticleUrls(weixin_info_id):
     conn.close()
     
     return urls
+
+def updateWeixinArticleById(id, weixin_name=None, weixin_no=None, openid=None, publish_date=None, thumbnail_url=None, thumbnail_path=None):
+    updateSql = []
+    updateSql.append("UPDATE gather_weixinarticle SET ")
+    if weixin_name is not None:
+        updateSql.append(",weixin_name='"+weixin_name+"'")
+    if weixin_no is not None:
+        updateSql.append(",weixin_no='"+weixin_no+"'")
+    if openid is not None:
+        updateSql.append(",openid='"+openid+"'")
+    if publish_date is not None:
+        updateSql.append(",publish_date='"+publish_date+"'")
+    if thumbnail_url is not None:
+        updateSql.append(",thumbnail_url="+str(thumbnail_url))
+    if thumbnail_path is not None:
+        updateSql.append(",thumbnail_path='"+thumbnail_path+"'")
+    updateSql.append(" WHERE id="+str(id))
+    if len(updateSql)>2:
+        if updateSql[1].count(",")>0:
+            updateSql[1] = updateSql[1][1:]
+        else:
+            print "updateWeixinInfoById sql error!"
+    conn = getConnect()
+    cur = conn.cursor()
+    cur.execute("".join(updateSql))
+    conn.commit()
+    cur.close()
+    conn.close()
     
 def updateWeixinInfoById(id, weixin_name=None, weixin_no=None, openid=None, last_scan_date=None, update_num=None, create_date=None):
     updateSql = []

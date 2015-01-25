@@ -22,13 +22,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__)).replace('\\','/')
 SECRET_KEY = 'c%3(ca=@1uzs))3c@bji0loe$#$p67e#-wmfw_!ajtrk4%$%v@'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-if socket.gethostname() == 'iZ23au1sj8vZ':
-    DEBUG = False
-    TEMPLATE_DEBUG = False
-    ALLOWED_HOSTS = ['*', ]
-else:
-    DEBUG = True
-    TEMPLATE_DEBUG = True
+DEBUG = True
+TEMPLATE_DEBUG = True
 
 # Application definition
 
@@ -60,30 +55,7 @@ ROOT_URLCONF = 'weixinarticle.urls'
 WSGI_APPLICATION = 'weixinarticle.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/1.7/ref/settings/#databases
-if socket.gethostname() == 'iZ23au1sj8vZ':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'HOST': '127.0.0.1',
-            'PORT': '3306',
-            'NAME': 'nidongde',
-            'USER': 'root',
-            'PASSWORD': 'nidongde',
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'HOST': '127.0.0.1',
-            'PORT': '3306',
-            'NAME': 'weixinarticle',
-            'USER': 'root',
-            'PASSWORD': '1161hyx',
-        }
-    }
+
 
 
 # Internationalization
@@ -109,7 +81,15 @@ print TEMPLATE_DIRS
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = '/var/www/webapps/weixinarticle_static/'
+STATIC_ROOT = 'c:/weixinarticle_static/'
 MEDIA_URL = '/media/'
-MEDIA_ROOT = '/var/www/webapps/weixinarticle_media/'
+MEDIA_ROOT = 'c:/weixinarticle_media/'
+
+from gather.config import *
+THUMBNAIL_SRC_ROOT = MEDIA_ROOT.join("thumbnail_src/")
+THUMBNAIL_TGT_ROOT = MEDIA_ROOT.join("thumbnail_tgt/")
+THUMBNAIL_WIDTH = 128
+THUMBNAIL_HEIGHT = 128
+
+
 

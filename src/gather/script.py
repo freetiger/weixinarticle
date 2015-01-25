@@ -80,7 +80,7 @@ def scan_article_list(article_list_urls):
 '''
 抓取微信weixin_info_id的文章内容，article_urls为文章标题title和链接url
 '''
-def scan_article_content(article_urls, weixin_info_id, weixin_name, weixin_no, openid):
+def scan_article_content(article_urls, weixin_info_id, weixin_name, weixin_no, openid, hasThumbnail=False):
     count =0
     for article_url in article_urls:
         title = article_url.get("title")
@@ -96,9 +96,22 @@ def scan_article_content(article_urls, weixin_info_id, weixin_name, weixin_no, o
         thumbnail_path = ""
         if len(datas)>0:
             thumbnail_url = datas[0]
-        dbutils.saveWeixinArticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path)
+        weixin_article_id = dbutils.saveWeixinArticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path)
+        #缩略图
+        if hasThumbnail and thumbnail_url.strip()!="":
+            outfile = gen_thumbnail(thumbnail_url.replace("?tp=webp", ""), str(weixin_article_id)+".jpg", str(weixin_article_id)+".jpg" )
+            dbutils.updateWeixinArticleById(weixin_article_id, thumbnail_path=outfile )
         count=count+1
     return count
+
+def gen_thumbnail(thumbnail_url, thumbnail_src_file, thumbnail_tgt_file):
+    from weixinarticle.settings import THUMBNAIL_SRC_ROOT, THUMBNAIL_TGT_ROOT, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT
+    infile = THUMBNAIL_SRC_ROOT.join(thumbnail_src_file)
+    outfile = THUMBNAIL_TGT_ROOT.join(thumbnail_tgt_file)
+    utils.download_weixin_image(thumbnail_url, infile)
+    utils.thumbnail(infile, outfile, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
+    return outfile
+
 
 '''
 过滤掉已抓取过的文章链接
