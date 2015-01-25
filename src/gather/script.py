@@ -162,7 +162,10 @@ def scan_article(weixin_info_id=None, openid=None, is_add=True):
 '''
 搜索keyword相关的微信号，weixin_name、weixin_no、openid
 '''
+from celery import task
+@task(name='search_weixin_info')
 def search_weixin_info(keyword, is_all=False):
+    print "search_weixin_info start"
     import urllib
     weixin_infos = []
     page_url = "http://weixin.sogou.com/weixin?type=1&"+urllib.urlencode({"query":keyword})
@@ -190,7 +193,7 @@ def search_weixin_info(keyword, is_all=False):
             break
         else:
             page_url = "http://weixin.sogou.com/weixin"+nextpage[0]
-    
+    print weixin_infos
     return weixin_infos
 
 def get_xici_proxies():

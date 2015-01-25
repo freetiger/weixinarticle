@@ -33,6 +33,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'djcelery',  #添加djcelery
     'xadmin',
     'crispy_forms',
     'reversion',
@@ -54,9 +55,18 @@ ROOT_URLCONF = 'weixinarticle.urls'
 
 WSGI_APPLICATION = 'weixinarticle.wsgi.application'
 
-
-
-
+# Database
+# https://docs.djangoproject.com/en/1.7/ref/settings/#databases
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
+        'NAME': 'weixinarticle',
+        'USER': 'root',
+        'PASSWORD': '1161hyx',
+    }
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
@@ -85,11 +95,35 @@ STATIC_ROOT = 'c:/weixinarticle_static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = 'c:/weixinarticle_media/'
 
-from gather.config import *
+#导入生产环境配置
+#from gather.config import *
+
+#缩略图配置
 THUMBNAIL_SRC_ROOT = MEDIA_ROOT.join("thumbnail_src/")
 THUMBNAIL_TGT_ROOT = MEDIA_ROOT.join("thumbnail_tgt/")
 THUMBNAIL_WIDTH = 128
 THUMBNAIL_HEIGHT = 128
 
+#celery任务调度配置
+# 配置djcelery相关参数，ResultStore默认存储在数据库可不必重写 ，
+import djcelery
+djcelery.setup_loader()
+BROKER_URL = 'amqp://guest:guest@0.0.0.0:5672//'
+# BROKER_URL = 'redis://localhost:6379/0'
+#任务定义所在的模块
+CELERY_IMPORTS = ('gather.script', )
+# 使用和Django一样的时区
+CELERY_TIMEZONE = TIME_ZONE
+ 
+#以上为基本配置，以下为周期性任务定义，以celerybeat_开头的  
+CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
+from datetime import timedelta
+CELERYBEAT_SCHEDULE = {
+    'add-every-1-minutes': {
+        'task': 'gather.script.search_weixin_info',
+        'schedule': timedelta(minutes=1)
+    },
+}
+print "settings"
 
 
