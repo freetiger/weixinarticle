@@ -22,8 +22,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__)).replace('\\','/')
 SECRET_KEY = 'c%3(ca=@1uzs))3c@bji0loe$#$p67e#-wmfw_!ajtrk4%$%v@'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-TEMPLATE_DEBUG = True
+if socket.gethostname() == 'iZ23au1sj8vZ':
+    DEBUG = False
+    TEMPLATE_DEBUG = False
+    ALLOWED_HOSTS = ['*', ]
+else:
+    DEBUG = True
+    TEMPLATE_DEBUG = True
 
 # Application definition
 
@@ -57,16 +62,28 @@ WSGI_APPLICATION = 'weixinarticle.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
-        'NAME': 'weixinarticle',
-        'USER': 'root',
-        'PASSWORD': '1161hyx',
+if socket.gethostname() == 'iZ23au1sj8vZ':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'HOST': '127.0.0.1',
+            'PORT': '3306',
+            'NAME': 'weixinarticle',
+            'USER': 'root',
+            'PASSWORD': 'nidongde',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'HOST': '127.0.0.1',
+            'PORT': '3306',
+            'NAME': 'weixinarticle',
+            'USER': 'root',
+            'PASSWORD': '1161hyx',
+        }
+    }
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
@@ -90,17 +107,23 @@ print TEMPLATE_DIRS
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = 'c:/weixinarticle_static/'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = 'c:/weixinarticle_media/'
+if socket.gethostname() == 'iZ23au1sj8vZ':
+    STATIC_URL = '/static/'
+    STATIC_ROOT = '/var/www/webapps/weixinarticle_static/'
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = '/var/www/webapps/weixinarticle_media/'
+else:
+    STATIC_URL = '/static/'
+    STATIC_ROOT = 'c:/weixinarticle_static/'
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = 'c:/weixinarticle_media/'
 
 #导入生产环境配置
 #from gather.config import *
 
 #缩略图配置
-THUMBNAIL_SRC_ROOT = MEDIA_ROOT.join("thumbnail_src/")
-THUMBNAIL_TGT_ROOT = MEDIA_ROOT.join("thumbnail_tgt/")
+THUMBNAIL_SRC_ROOT = MEDIA_ROOT+"thumbnail_src/"
+THUMBNAIL_TGT_ROOT = MEDIA_ROOT+"thumbnail_tgt/"
 THUMBNAIL_WIDTH = 128
 THUMBNAIL_HEIGHT = 128
 
@@ -124,6 +147,16 @@ CELERYBEAT_SCHEDULE = {
         'schedule': timedelta(minutes=1)
     },
 }
-print "settings"
+
+
+#配置提示
+print "---------------------------------------------------------"
+print "please rewrite weixinarticle.settings.DATABASES"
+print "please rewrite gather.dbutils.password"
+print "---------------------------------------------------------"
+
+
+
+
 
 

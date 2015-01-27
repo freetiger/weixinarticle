@@ -404,7 +404,8 @@ def thumbnail(infile, outfile, width, height):
         im.save(outfile, "JPEG")
     except IOError:
         print "cannot create thumbnail for '%s'" % infile
-
+    except:
+        print "thumbnail except!"
 if __name__ == "__main__":   
     #download_weixin_image("http://mmbiz.qpic.cn/mmbiz/vMw2Wc6GmwEfleaKMISaQic1LtDvLkycwjT3QCYRP6sqAbBtD3wiba6T0q0brF7zbLkJLZFPMaKcpvTlqmTvq2VQ/0", "c:/weixin_image.jpg")
     thumbnail("d:/weixin_image.jpg", "d:/weixin_image.thumbnail.jpg", 128,128)

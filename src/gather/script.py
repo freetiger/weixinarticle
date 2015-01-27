@@ -4,9 +4,10 @@ Created on 2015年1月12日
 
 @author: heyuxing
 '''
-import datetime,time
+import datetime
 from gather import utils, dbutils
 import re
+import os
 
 #抓取停止（抓取请求被禁止）
 is_end = False
@@ -17,24 +18,27 @@ http://weixin.sogou.com 搜索的结果页的页数，并不准确，需要逼�
 def get_page_total(openid):
     page_total = 1
     page_current = 1
-    param_retrieve_str = re.compile(r'"totalPages":(\d*),"page":(\d*)')
+    totalPages_retrieve_str = re.compile(r'"totalPages":(\d*)')
+    page_retrieve_str = re.compile(r'"page":(\d*)')
     while True:
         page_src = utils.getSogouContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid="+openid+"&page="+str(page_current), sleep_time=1)
         if page_src is None:
             is_end = True
             return 0
-        params = param_retrieve_str.findall(page_src)
-        if len(params)==0:
+        totalPages = totalPages_retrieve_str.findall(page_src)
+        page = page_retrieve_str.findall(page_src)
+        if len(totalPages)==0 or len(page)==0:
             print "ERROR: get_page_total error!"
             print page_src
             break
-        page_total = int(params[0][0])
-        page_current = int(params[0][1])
+        else:
+            page_total = int(totalPages[0])
+            page_current = int(page[0])
         if(page_current>=page_total):
             break
         else:
             page_current = page_total
-    print "page_total="+str(page_total)
+    print "sogou page_total(10 results per page)="+str(page_total)
     return page_total     
 
 '''
@@ -75,6 +79,7 @@ def scan_article_list(article_list_urls):
             else:
                 print "ERROR: scan_article_list("+article_list_url+") error! len(datas)="+str(len(datas))+", len(publish_date)="+str(len(publish_dates))
                 print page_src
+    print "weixin article total="+str(len(article_urls))
     return article_urls
 
 '''
@@ -102,12 +107,17 @@ def scan_article_content(article_urls, weixin_info_id, weixin_name, weixin_no, o
             outfile = gen_thumbnail(thumbnail_url.replace("?tp=webp", ""), str(weixin_article_id)+".jpg", str(weixin_article_id)+".jpg" )
             dbutils.updateWeixinArticleById(weixin_article_id, thumbnail_path=outfile )
         count=count+1
+    print "Newly added article total="+str(count)
     return count
 
 def gen_thumbnail(thumbnail_url, thumbnail_src_file, thumbnail_tgt_file):
     from weixinarticle.settings import THUMBNAIL_SRC_ROOT, THUMBNAIL_TGT_ROOT, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT
-    infile = THUMBNAIL_SRC_ROOT.join(thumbnail_src_file)
-    outfile = THUMBNAIL_TGT_ROOT.join(thumbnail_tgt_file)
+    if not os.path.exists(THUMBNAIL_SRC_ROOT):
+        os.makedirs(THUMBNAIL_SRC_ROOT)
+    if not os.path.exists(THUMBNAIL_TGT_ROOT):
+        os.makedirs(THUMBNAIL_TGT_ROOT)
+    infile = THUMBNAIL_SRC_ROOT+thumbnail_src_file
+    outfile = THUMBNAIL_TGT_ROOT+thumbnail_tgt_file
     utils.download_weixin_image(thumbnail_url, infile)
     utils.thumbnail(infile, outfile, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
     return outfile
@@ -152,7 +162,7 @@ def scan_article(weixin_info_id=None, openid=None, is_add=True):
         article_urls = scan_article_list(article_list_urls)
         if is_add:
             article_urls = article_urls_filter(article_urls, weixin_info_id)
-        update_num = scan_article_content(article_urls, weixin_info_id, weixin_name, weixin_no, openid)
+        update_num = scan_article_content(article_urls, weixin_info_id, weixin_name, weixin_no, openid, hasThumbnail=True)
         #抓取时间和文章数更新
         dbutils.updateWeixinInfoById(id=weixin_info_id, last_scan_date=str(datetime.datetime.now()), update_num=update_num)
         return ""

@@ -22,7 +22,8 @@ def getConnect():
 def saveWeixinArticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path):
     conn = getConnect()
     cur = conn.cursor()
-    weixin_article_id = cur.execute("insert into gather_weixinarticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path, create_date) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" , (weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path, datetime.datetime.now()))
+    cur.execute("insert into gather_weixinarticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path, create_date) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)" , (weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path, datetime.datetime.now()))
+    weixin_article_id=int(cur.lastrowid)
     conn.commit()
     cur.close()
     conn.close()
