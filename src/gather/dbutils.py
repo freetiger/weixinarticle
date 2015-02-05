@@ -54,7 +54,7 @@ def updateWeixinArticleById(id, weixin_name=None, weixin_no=None, openid=None, p
     if publish_date is not None:
         updateSql.append(",publish_date='"+publish_date+"'")
     if thumbnail_url is not None:
-        updateSql.append(",thumbnail_url="+str(thumbnail_url))
+        updateSql.append(",thumbnail_url='"+str(thumbnail_url)+"'")
     if thumbnail_path is not None:
         updateSql.append(",thumbnail_path='"+thumbnail_path+"'")
     updateSql.append(" WHERE id="+str(id))

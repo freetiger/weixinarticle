@@ -206,15 +206,17 @@ def parse_block_match(page_src, start_str, end_str):
                 b_pos = e_pos
     return block_data_map_list
 
+
 '''
 获得url请求数据的结果htmlsrc
 url：请求链接
 post_datas：post数据
 url前缀做判断：如果是文件则读取文件内容返回，如果是文本内容则直接返回该内容，如果是url则返回该url应答页面的内容。
 '''
-def getUrlContent(url, post_datas={}, sleep_time=0, proxies={}, headers={}, urllib2=None):
+def getResponse(url, post_datas={}, sleep_time=0, proxies={}, headers={}, urllib2=None):
+    resp = ""
     if len(url)==0:
-        return ""
+        return resp
     url = urlzhuanyi(url)
     import random
     sleep_time = random.uniform(2,5)
@@ -235,9 +237,7 @@ def getUrlContent(url, post_datas={}, sleep_time=0, proxies={}, headers={}, urll
             #"Cookie":"skin=noskin; path=/; domain=.amazon.com; expires=Wed, 25-Mar-2009 08:38:55 GMT\r\nsession-id-time=1238569200l; path=/; domain=.amazon.com; expires=Wed Apr 01 07:00:00 2009 GMT\r\nsession-id=175-6181358-2561013; path=/; domain=.amazon.com; expires=Wed Apr 01 07:00:00 2009 GMT"
         }
     req=urllib2.Request(url,headers=headers) #伪造request的header头，有些网站不支持，会拒绝请求;有些网站必须伪造header头才能访问
-    htmlsrc = ""
     try:
-        resp = None
         if post_datas:
             url_data = urllib.urlencode(post_datas)
             resp = urllib2.urlopen(req, url_data)
@@ -245,21 +245,60 @@ def getUrlContent(url, post_datas={}, sleep_time=0, proxies={}, headers={}, urll
         else:
             resp = urllib2.urlopen(req)
             print "request: "+str(url)
-        htmlsrc =resp.read()                
-        code = resp.getcode()
-        if code==200:
-            response_headers = resp.headers.dict
-            if response_headers.get("content-encoding")=="gzip":
-                htmlsrc = gunzip(htmlsrc)
-            elif response_headers.get("content-encoding") == "deflate":
-                htmlsrc = deflate(htmlsrc)
-        else:
-            print "ERROR: code="+str(code)+" url="+url
+    except:
+        print "ERROR: request time out. url="+url,
+
+    return resp
+
+'''
+获得url请求数据的结果htmlsrc
+url：请求链接
+post_datas：post数据
+url前缀做判断：如果是文件则读取文件内容返回，如果是文本内容则直接返回该内容，如果是url则返回该url应答页面的内容。
+'''
+def getUrlContent(url, post_datas={}, sleep_time=0, proxies={}, headers={}, urllib2=None):
+    htmlsrc = ""
+    try:
+        resp = getResponse(url, post_datas, sleep_time, proxies, headers, urllib2)
+        if resp:
+            htmlsrc =resp.read()                
+            code = resp.getcode()
+            if code==200:
+                response_headers = resp.headers.dict
+                if response_headers.get("content-encoding")=="gzip":
+                    htmlsrc = gunzip(htmlsrc)
+                elif response_headers.get("content-encoding") == "deflate":
+                    htmlsrc = deflate(htmlsrc)
+            else:
+                print "ERROR: code="+str(code)+" url="+url
     except:
         print "ERROR: request time out. url="+url,
         htmlsrc = ""
 
     return htmlsrc
+
+'''
+获得url请求数据的结果htmlsrc
+url：请求链接
+post_datas：post数据
+url前缀做判断：如果是文件则读取文件内容返回，如果是文本内容则直接返回该内容，如果是url则返回该url应答页面的内容。
+'''
+def getContentType(url, post_datas={}, sleep_time=0, proxies={}, headers={}, urllib2=None):
+    content_type = ""
+    try:
+        resp = getResponse(url, post_datas, sleep_time, proxies, headers, urllib2)
+        if resp:
+            code = resp.getcode()
+            if code==200:
+                response_headers = resp.headers.dict
+                content_type = response_headers["content-type"]
+            else:
+                print "ERROR: code="+str(code)+" url="+url
+    except:
+        print "ERROR: request time out. url="+url,
+        content_type = ""
+
+    return content_type
 
 def init_urllib2(proxies={}):
     cj = cookielib.CookieJar()
@@ -296,18 +335,18 @@ def deflate(data):
 '''
 抓取搜狗页面
 '''
-def getSogouContent(url, post_datas={}, sleep_time=0, proxies={},):
-    headers = {
-        "Accept":"*/*",
-        "Accept-Encoding":"gzip,deflate,sdch",
-        "Accept-Language":"zh-CN,zh;q=0.8,en;q=0.6,zh-TW;q=0.4",
-        "Cache-Control":"max-age=0",
-        "Connection":"keep-alive",
-        #"Cookie":"CXID=8F8A8A2502CBBED58ED24FE011474E44; SUID=1EC5E76561110C0A5332C67600095CA6; SUV=1396594719216119; ssuid=7214764425; pgv_pvi=7991477248; SMYUV=1403240797197204; usid=Q9hUBRtYFZ9TSfqY; IPLOC=CN3100; SNUID=28F3D250363039CA19695F1B3616C952; sct=10; ABTEST=8|1421655123|v17",
-        "Host":"weixin.sogou.com",
-        "Referer":"http://weixin.sogou.com/",
-        "User-Agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36",
-    }
+def getSogouContent(url, post_datas={}, sleep_time=0, proxies={}, headers=None):
+    if headers==None:
+        headers = {
+            "Accept":"*/*",
+            "Accept-Encoding":"gzip,deflate,sdch",
+            "Accept-Language":"zh-CN,zh;q=0.8,en;q=0.6,zh-TW;q=0.4",
+            "Cache-Control":"max-age=0",
+            "Connection":"keep-alive",
+            "Host":"weixin.sogou.com",
+            "Referer":"http://weixin.sogou.com/",
+            "User-Agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36",
+        }
     global sogou_urllib2
     if sogou_urllib2 is None:
         sogou_urllib2 = init_urllib2()
@@ -367,6 +406,12 @@ def gatherXici(url, post_datas={}, sleep_time=0, proxies={}, ):
     #htmlsrc = getUrlContent(url, post_datas, sleep_time, proxies, headers)
     return "htmlsrc"
 
+def download(download_url, store_file, mode, post_datas={}, sleep_time=0, proxies={}, headers={}, urllib2=None):
+    page_src = getUrlContent(download_url, post_datas, sleep_time, proxies, headers, urllib2)
+    with open(store_file, mode) as out:
+        out.write(page_src)
+    return store_file
+
 
 def download_weixin_image(download_url, store_file, post_datas={}, sleep_time=0, proxies={},):
     headers = {
@@ -389,11 +434,51 @@ def download_weixin_image(download_url, store_file, post_datas={}, sleep_time=0,
     print "weixin_image_count="+str(weixin_image_count)
     return store_file
 
-def download(download_url, store_file, mode, post_datas={}, sleep_time=0, proxies={}, headers={}, urllib2=None):
-    page_src = getUrlContent(download_url, post_datas, sleep_time, proxies, headers, weixin_urllib2)
-    with open(store_file, mode) as jpg:
-        jpg.write(page_src)
-    return store_file
+def download_thumbnail_weixin_image(download_url, src_file, thumbnail_file, post_datas={}, sleep_time=0, proxies={}):
+    headers = {
+        "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Encoding":"gzip,deflate,sdch",
+        "Accept-Language":"zh-CN,zh;q=0.8,en;q=0.6,zh-TW;q=0.4",
+        "Cache-Control":"max-age=0",
+        "Connection":"keep-alive",
+        "Host":"mmbiz.qpic.cn",
+        #"If-Modified-Since":"Mon, 19 Jan 2015 08:27:42 GMT",
+        "Referer":"http://mp.weixin.qq.com/",
+        "User-Agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36",
+    }
+    global weixin_image_urllib2
+    if weixin_image_urllib2 is None:
+        weixin_image_urllib2 = init_urllib2()
+    try:
+        resp = getResponse(download_url, post_datas, sleep_time, proxies, headers, weixin_image_urllib2)
+        if resp:
+            code = resp.getcode()
+            if code==200:
+                response_headers = resp.headers.dict
+                content_type = response_headers["content-type"]
+                if content_type=="image/jpeg" or content_type=="image/png" :#统一一下
+                    page_src = resp.read()         
+                    import os
+                    from weixinarticle.settings import THUMBNAIL_SRC_ROOT, THUMBNAIL_TGT_ROOT, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT
+                    if not os.path.exists(THUMBNAIL_SRC_ROOT):
+                        os.makedirs(THUMBNAIL_SRC_ROOT)
+                    if not os.path.exists(THUMBNAIL_TGT_ROOT):
+                        os.makedirs(THUMBNAIL_TGT_ROOT)
+                    infile = THUMBNAIL_SRC_ROOT+src_file
+                    outfile = THUMBNAIL_TGT_ROOT+thumbnail_file
+                    with open(infile, "wb") as out:
+                        out.write(page_src)
+                    global weixin_image_count
+                    weixin_image_count = weixin_image_count+1
+                    print "weixin_image_count="+str(weixin_image_count)
+                    return thumbnail(infile, outfile, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
+                else:
+                    print "download_thumbnail_weixin_image content_type="+content_type
+            else:
+                print "ERROR: code="+str(code)+" url="+download_url
+    except:
+        print "ERROR: request time out. url="+download_url
+    return False
         
 def thumbnail(infile, outfile, width, height):
     import Image
@@ -402,12 +487,14 @@ def thumbnail(infile, outfile, width, height):
         im = Image.open(infile)
         im.thumbnail(size, Image.ANTIALIAS)
         im.save(outfile, "JPEG")
+        return True
     except IOError:
         print "cannot create thumbnail for '%s'" % infile
     except:
         print "thumbnail except!"
+    return False
 if __name__ == "__main__":   
-    #download_weixin_image("http://mmbiz.qpic.cn/mmbiz/vMw2Wc6GmwEfleaKMISaQic1LtDvLkycwjT3QCYRP6sqAbBtD3wiba6T0q0brF7zbLkJLZFPMaKcpvTlqmTvq2VQ/0", "c:/weixin_image.jpg")
-    thumbnail("d:/weixin_image.jpg", "d:/weixin_image.thumbnail.jpg", 128,128)
+    download_weixin_image("http://mmbiz.qpic.cn/mmbiz/DU5uicRE9EFpLuEgbEptw2KI6ozsWSdCicNEwhplXvSGG5uuHORa1PBlib0YjMcXRL8bRkQt7QPuicIQN0hPV50qcQ/0", "d:/weixin_image22333.jpeg")
+#     thumbnail("d:/weixin_image.jpeg", "d:/weixin_image.thumbnail.jpeg", 128,128)
     
     

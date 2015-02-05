@@ -33,12 +33,15 @@ else:
 # Application definition
 
 INSTALLED_APPS = (
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'djcelery',  #添加djcelery
+    'djcelery',
+    'kombu.transport.django',
+    'djangotasks',
     'xadmin',
     'crispy_forms',
     'reversion',
@@ -131,22 +134,24 @@ THUMBNAIL_HEIGHT = 128
 # 配置djcelery相关参数，ResultStore默认存储在数据库可不必重写 ，
 import djcelery
 djcelery.setup_loader()
-BROKER_URL = 'amqp://guest:guest@0.0.0.0:5672//'
-# BROKER_URL = 'redis://localhost:6379/0'
+BROKER_URL = 'django://'
+# BROKER_URL = 'amqp://guest:guest@0.0.0.0:5672//'
+# BROKER_URL = 'redis://localhost:6379/0' 
 #任务定义所在的模块
 CELERY_IMPORTS = ('gather.script', )
 # 使用和Django一样的时区
 CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
  
 #以上为基本配置，以下为周期性任务定义，以celerybeat_开头的  
-CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
-from datetime import timedelta
-CELERYBEAT_SCHEDULE = {
-    'add-every-1-minutes': {
-        'task': 'gather.script.search_weixin_info',
-        'schedule': timedelta(minutes=1)
-    },
-}
+# CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
+# from datetime import timedelta
+# CELERYBEAT_SCHEDULE = {
+#     'add-every-1-minutes': {
+#         'task': 'gather.script.search_weixin_info',
+#         'schedule': timedelta(minutes=1)
+#     },
+# }
 
 
 #配置提示

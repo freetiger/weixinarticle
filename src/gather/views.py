@@ -20,11 +20,21 @@ def article_show(request, weixin_article_id):
         return "未找到文章"
     else:
         return HttpResponse(weixinArticle.content)
-    
-def scheduler(request):
-    from gather.scheduler import scheduler_scan_all_article
-    scheduler_scan_all_article()#TODO
-    html = "<html><body>定时任务启动. </body></html>" 
+   
+def remote_scan_article(request, weixin_nos):
+    print "remote_scan_article: weixin_nos="+str(weixin_nos)
+    from tasks import scan_article
+    scan_article.delay(weixin_nos=weixin_nos)
+    html = "success" 
+    return HttpResponse(html)
+ 
+def remote_add_weixin_info(request, weixin_nos):
+    print "remote_add_weixin_info: weixin_nos="+str(weixin_nos)
+    weixin_no_list = weixin_nos.split("|")
+    for weixin_no in weixin_no_list:
+        if weixin_no.strip()!="":
+            print "weixin_no="+str(weixin_no)
+    html = "success"
     return HttpResponse(html)
 
 

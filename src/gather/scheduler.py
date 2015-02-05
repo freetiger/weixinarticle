@@ -13,10 +13,34 @@ import time
 import logging
 logging.basicConfig()
 
+scheduler = None
+
 def scan_all_article():
     weixinInfoList = dbutils.getWeixinInfoList()
     for weixinInfo in weixinInfoList:
         scan_article(weixin_info_id=weixinInfo.id)
+        
+def stop():
+    if scheduler is not None:
+        try:
+            scheduler.shutdown()
+            scheduler=None
+        except:
+            print "stop scheduler error!"
+        print "stop scheduler success!"
+    else:
+        print "scheduler is stop!"
+
+def start():
+    if scheduler is None:
+        scheduler = BackgroundScheduler()
+        scheduler.add_job(scan_all_article, 'cron', hour='0-23', minute=50)
+        scheduler.start()
+        print "start scheduler success!"
+        
+def restart():
+    stop()
+    start()
         
 def scheduler_scan_all_article():
     print "scheduler_scan_all_article is start!"
@@ -51,6 +75,4 @@ if __name__ == '__main__':
 #             time.sleep(2)
 #     except (KeyboardInterrupt, SystemExit):
 #         scheduler.shutdown()  # Not strictly necessary if daemonic mode is enabled but should be done if possible
-
-
 

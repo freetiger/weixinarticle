@@ -97,16 +97,33 @@ def scan_article_content(article_urls, weixin_info_id, weixin_name, weixin_no, o
             return count
         regular_str = re.compile(r'(http://mmbiz.qpic.cn/mmbiz[^"]*)')
         datas = regular_str.findall(content)
-        thumbnail_url = ""
-        thumbnail_path = ""
-        if len(datas)>0:
-            thumbnail_url = datas[0]
-        weixin_article_id = dbutils.saveWeixinArticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path)
-        #缩略图
-        if hasThumbnail and thumbnail_url.strip()!="":
-            outfile = gen_thumbnail(thumbnail_url.replace("?tp=webp", ""), str(weixin_article_id)+".jpg", str(weixin_article_id)+".jpg" )
-            dbutils.updateWeixinArticleById(weixin_article_id, thumbnail_path=outfile )
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(content)
+        #去除微信二维码
+        js_pc_qr_code = soup.find(id="js_pc_qr_code")
+        if js_pc_qr_code is not None:
+            js_pc_qr_code.replace_with("")
+        #去除评论
+        js_cmt_more = soup.find(id="js_cmt_more")
+        if js_cmt_more is not None:
+            js_cmt_more.replace_with("")
+        js_cmt_mine = soup.find(id="js_cmt_mine")
+        if js_cmt_mine is not None:
+            js_cmt_mine.replace_with("")
+        #html5图片展示使其适应于html4
+        img_list = soup.find_all(attrs={"data-src": True, })
+        for img in img_list:
+            img["src"]=img["data-src"]
+        content = str(soup) 
+        weixin_article_id = dbutils.saveWeixinArticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, "", "")
         count=count+1
+        #缩略图
+        if hasThumbnail and len(datas)>0:
+            for index in range(len(datas)):
+                result = utils.download_thumbnail_weixin_image(datas[index].replace("?tp=webp", ""), str(weixin_article_id)+".jpg", str(weixin_article_id)+".jpg" )
+                if result:
+                    dbutils.updateWeixinArticleById(weixin_article_id, thumbnail_url=datas[index])
+                    break
     print "Newly added article total="+str(count)
     return count
 
@@ -175,7 +192,7 @@ def scan_article(weixin_info_id=None, openid=None, is_add=True):
 from celery import task
 @task(name='search_weixin_info')
 def search_weixin_info(keyword, is_all=False):
-    print "search_weixin_info start"
+    print "search_weixin_info start, keyword="+keyword
     import urllib
     weixin_infos = []
     page_url = "http://weixin.sogou.com/weixin?type=1&"+urllib.urlencode({"query":keyword})
@@ -206,6 +223,34 @@ def search_weixin_info(keyword, is_all=False):
     print weixin_infos
     return weixin_infos
 
+def temp_get_weixin_info(weixin_no):
+    weixin_no = weixin_no.strip()
+    page_url = "http://w.sugg.sogou.com/sugg/ajaj_json.jsp?key="+weixin_no+"&type=wxpub&ori=yes&pr=web&abtestid=&ipn="
+    headers = {
+        "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Encoding":"gzip,deflate,sdch",
+        "Accept-Language":"zh-CN,zh;q=0.8,en;q=0.6,zh-TW;q=0.4",
+        "Cache-Control":"max-age=0",
+        "Connection":"keep-alive",
+        "Host":"w.sugg.sogou.com",
+        "User-Agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36",     
+    }
+    page_src = utils.getSogouContent(page_url, headers=headers)
+    page_src = page_src.decode('GBK').encode('utf8')
+    regular_str = re.compile(r'\["'+weixin_no+r'",\[([^]]*)')
+    datas = regular_str.findall(page_src)
+    print "get_weixin_info, datas="+str(datas)
+    if datas:
+        data_list = datas[0].split(",")
+        for data in data_list:
+            weixin_name =  data.replace("\"", "")
+            weixin_infos = search_weixin_info(weixin_name)
+            print weixin_infos
+            for weixin_info in weixin_infos:
+                if weixin_info[1]==weixin_no:
+                    return weixin_info
+    return None
+
 def get_xici_proxies():
     proxies=[]
     #国内透明代理IP
@@ -229,7 +274,8 @@ if __name__ == "__main__":
 #     print time.time()
 #     print str(time.time()).replace(".","0")
 #     print utils.getUrlContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt9FjqlkRSJGxc-a_1SMFSYo&page=1&t="+str(time.time()).replace(".","0"))
-    get_xici_proxies()
+#     get_xici_proxies()
+#     print get_weixin_info("dongjian2015")
 
     
         
