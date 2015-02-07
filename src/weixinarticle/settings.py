@@ -41,7 +41,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'djcelery',
     'kombu.transport.django',
-    'djangotasks',
     'xadmin',
     'crispy_forms',
     'reversion',
@@ -93,7 +92,7 @@ else:
 
 LANGUAGE_CODE = 'zh-cn'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
@@ -104,8 +103,6 @@ USE_TZ = False
 TEMPLATE_DIRS = (
     BASE_DIR+'/weixinarticle/templates',
 )
-
-print TEMPLATE_DIRS
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
@@ -137,26 +134,19 @@ djcelery.setup_loader()
 BROKER_URL = 'django://'
 # BROKER_URL = 'amqp://guest:guest@0.0.0.0:5672//'
 # BROKER_URL = 'redis://localhost:6379/0' 
-#任务定义所在的模块
-CELERY_IMPORTS = ('gather.script', )
 # 使用和Django一样的时区
+CELERY_ENABLE_UTC = False
 CELERY_TIMEZONE = TIME_ZONE
-CELERY_ENABLE_UTC = True
  
 #以上为基本配置，以下为周期性任务定义，以celerybeat_开头的  
-# CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
-# from datetime import timedelta
-# CELERYBEAT_SCHEDULE = {
-#     'add-every-1-minutes': {
-#         'task': 'gather.script.search_weixin_info',
-#         'schedule': timedelta(minutes=1)
-#     },
-# }
-
+CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
+# CELERY_RESULT_BACKEND = 'db+mysql://root:nidongde@localhost:3306/weixinarticle'
+CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend'
+CELERY_RESULT_BACKEND='djcelery.backends.cache:CacheBackend'
 
 #配置提示
 print "---------------------------------------------------------"
-print "please rewrite weixinarticle.settings.DATABASES"
+print "please rewrite weixinarticle.settings.DATABASES:"+str(DATABASES["default"]["PASSWORD"])
 print "please rewrite gather.dbutils.password"
 print "---------------------------------------------------------"
 

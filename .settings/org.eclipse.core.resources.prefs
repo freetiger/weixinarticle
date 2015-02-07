@@ -14,6 +14,7 @@ encoding//src/manage.py=utf-8
 encoding//src/plugins/export.py=utf-8
 encoding//src/plugins/listaction.py=utf-8
 encoding//src/plugins/listextradisplay.py=utf-8
+encoding//src/weixinarticle/__init__.py=utf-8
 encoding//src/weixinarticle/celery.py=utf-8
 encoding//src/weixinarticle/settings.py=utf-8
 encoding/<project>=UTF-8

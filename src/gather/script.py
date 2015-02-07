@@ -265,6 +265,7 @@ def get_xici_proxies():
     
 
 if __name__ == "__main__":   
+    pass
     #scan_article(openid="oIWsFt-Atb62Noyz4nKX1nvrmFHQ")
     #print search_weixin_info("晓说", True)
 #     article_list_urls = ["http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt21qMCAR53L_nCd27iMBnOs&page=7", ]
