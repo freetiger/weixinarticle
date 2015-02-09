@@ -8,6 +8,7 @@ import datetime
 from gather import utils, dbutils
 import re
 import os
+from arrow.arrow import Arrow
 
 #抓取停止（抓取请求被禁止）
 is_end = False
@@ -15,16 +16,34 @@ is_end = False
 '''
 http://weixin.sogou.com 搜索的结果页的页数，并不准确，需要逼近最后一页确定总页数
 '''
-def get_page_total(openid):
+def get_page_total(openid, look_back=0):
     page_total = 1
     page_current = 1
+    min_publish_date =None
     totalPages_retrieve_str = re.compile(r'"totalPages":(\d*)')
     page_retrieve_str = re.compile(r'"page":(\d*)')
+    publish_date_retrieve_str = re.compile(r'<date><!\[CDATA\[([^]]*)')
     while True:
+        if look_back>0:
+            '''
+            ('2014-12-08', '2015-2-8')
+            >>> a=time.strptime(s1, '%Y-%m-%d')
+            >>> b=time.strptime(s2, '%Y-%m-%d')
+            >>> time.mktime(a)-time.mktime(b)
+            -5356800.0
+            '''
+            pass
         page_src = utils.getSogouContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid="+openid+"&page="+str(page_current), sleep_time=1)
         if page_src is None:
             is_end = True
             return 0
+        if look_back>0:
+            min_publish_dates = publish_date_retrieve_str.findall(page_src)
+            if len(min_publish_dates)>0:
+                min_publish_date=min_publish_dates[-1]
+                import arrow
+                arrow.get(min_publish_date, 'YYYY-M-D')
+                #查询数据库gather_weixinarticle确定最大日期
         totalPages = totalPages_retrieve_str.findall(page_src)
         page = page_retrieve_str.findall(page_src)
         if len(totalPages)==0 or len(page)==0:
@@ -120,7 +139,7 @@ def scan_article_content(article_urls, weixin_info_id, weixin_name, weixin_no, o
         #缩略图
         if hasThumbnail and len(datas)>0:
             for index in range(len(datas)):
-                result = utils.download_thumbnail_weixin_image(datas[index].replace("?tp=webp", ""), str(weixin_article_id)+".jpg", str(weixin_article_id)+".jpg" )
+                result = utils.download_thumbnail_weixin_image(datas[index].replace("?tp=webp", ""), str(weixin_no)+"/"+str(weixin_article_id)+".jpg", str(weixin_no)+"/"+str(weixin_article_id)+".jpg" )
                 if result:
                     dbutils.updateWeixinArticleById(weixin_article_id, thumbnail_url=datas[index])
                     break
@@ -146,8 +165,9 @@ def gen_thumbnail(thumbnail_url, thumbnail_src_file, thumbnail_tgt_file):
 def article_urls_filter(article_urls, weixin_info_id):
     urls = dbutils.getWeixinArticleUrls(weixin_info_id)
     temp_article_urls = []
-    for article_url in article_urls:
-        if article_url.get("url") not in urls:
+    #文章列表按照时间正序排列，即搜索结果的倒序；并去重复
+    for article_url in article_urls[::-1]:
+        if article_url.get("url") not in urls and article_url not in article_urls:
             temp_article_urls.append(article_url)
     return temp_article_urls
     
@@ -157,7 +177,7 @@ weixin_info_id：微信信息表WeixinInfo的id
 openid：微信公众账号的openid
 is_add：是否增量扫描，默认是True
 '''
-def scan_article(weixin_info_id=None, openid=None, is_add=True):
+def scan_article(weixin_info_id=None, openid=None, is_add=True, look_back=0):
     if is_end:
         print "is_end="+str(is_end)
         return
@@ -174,7 +194,7 @@ def scan_article(weixin_info_id=None, openid=None, is_add=True):
         weixin_name = weixinInfo.weixin_name
         openid = weixinInfo.openid
         weixin_no = weixinInfo.weixin_no
-        page_total = get_page_total(openid)
+        page_total = get_page_total(openid, look_back)
         article_list_urls = get_article_list_urls(openid, page_total)
         article_urls = scan_article_list(article_list_urls)
         if is_add:
