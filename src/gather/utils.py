@@ -6,6 +6,7 @@ Created on 2015年1月12日
 '''
 import urllib2, cookielib, urllib
 import time
+import traceback
 
 class HTTPRefererProcessor(urllib2.BaseHandler):
     def __init__(self):
@@ -466,6 +467,12 @@ def download_thumbnail_weixin_image(download_url, src_file, thumbnail_file, post
                         os.makedirs(THUMBNAIL_TGT_ROOT)
                     infile = THUMBNAIL_SRC_ROOT+src_file
                     outfile = THUMBNAIL_TGT_ROOT+thumbnail_file
+                    infile_path = os.path.split(infile)[0]
+                    if not os.path.exists(infile_path):
+                        os.mkdir(infile_path)
+                    outfile_path = os.path.split(outfile)[0]
+                    if not os.path.exists(outfile_path):
+                        os.mkdir(outfile_path)
                     with open(infile, "wb") as out:
                         out.write(page_src)
                     global weixin_image_count
@@ -478,6 +485,7 @@ def download_thumbnail_weixin_image(download_url, src_file, thumbnail_file, post
                 print "ERROR: code="+str(code)+" url="+download_url
     except:
         print "ERROR: request time out. url="+download_url
+        print traceback.format_exc()
     return False
         
 def thumbnail(infile, outfile, width, height):

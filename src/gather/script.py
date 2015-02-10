@@ -16,10 +16,9 @@ is_end = False
 '''
 http://weixin.sogou.com 搜索的结果页的页数，并不准确，需要逼近最后一页确定总页数
 '''
-def get_page_total(openid, look_back=0):
+def get_page_total(weixin_info_id, openid, look_back=0):
     page_total = 1
     page_current = 1
-    min_publish_date =None
     totalPages_retrieve_str = re.compile(r'"totalPages":(\d*)')
     page_retrieve_str = re.compile(r'"page":(\d*)')
     publish_date_retrieve_str = re.compile(r'<date><!\[CDATA\[([^]]*)')
@@ -40,9 +39,10 @@ def get_page_total(openid, look_back=0):
         if look_back>0:
             min_publish_dates = publish_date_retrieve_str.findall(page_src)
             if len(min_publish_dates)>0:
-                min_publish_date=min_publish_dates[-1]
+                min_publish_date_str=min_publish_dates[-1]
                 import arrow
-                arrow.get(min_publish_date, 'YYYY-M-D')
+                min_publish_date = arrow.get(min_publish_date_str, 'YYYY-M-D')
+                max_publish_date = dbutils.getWeixinArticleMaxPublishDate(weixin_info_id)
                 #查询数据库gather_weixinarticle确定最大日期
         totalPages = totalPages_retrieve_str.findall(page_src)
         page = page_retrieve_str.findall(page_src)
@@ -167,7 +167,7 @@ def article_urls_filter(article_urls, weixin_info_id):
     temp_article_urls = []
     #文章列表按照时间正序排列，即搜索结果的倒序；并去重复
     for article_url in article_urls[::-1]:
-        if article_url.get("url") not in urls and article_url not in article_urls:
+        if article_url.get("url") not in urls and article_url not in temp_article_urls:
             temp_article_urls.append(article_url)
     return temp_article_urls
     
@@ -194,7 +194,7 @@ def scan_article(weixin_info_id=None, openid=None, is_add=True, look_back=0):
         weixin_name = weixinInfo.weixin_name
         openid = weixinInfo.openid
         weixin_no = weixinInfo.weixin_no
-        page_total = get_page_total(openid, look_back)
+        page_total = get_page_total(weixin_info_id, openid, look_back)
         article_list_urls = get_article_list_urls(openid, page_total)
         article_urls = scan_article_list(article_list_urls)
         if is_add:

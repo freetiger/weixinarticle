@@ -42,6 +42,16 @@ def getWeixinArticleUrls(weixin_info_id):
     
     return urls
 
+def getWeixinArticleMaxPublishDate(weixin_info_id):
+    conn = getConnect()
+    cur = conn.cursor()
+    cur.execute("SELECT MAX(publish_date) FROM gather_weixinarticle WHERE weixin_info_id="+str(weixin_info_id))
+    datas = cur.fetchall()  
+    cur.close()
+    conn.close()
+    
+    return datas[0][0] if len(datas)>0 else None
+
 def updateWeixinArticleById(id, weixin_name=None, weixin_no=None, openid=None, publish_date=None, thumbnail_url=None, thumbnail_path=None):
     updateSql = []
     updateSql.append("UPDATE gather_weixinarticle SET ")
@@ -144,8 +154,10 @@ if __name__ == "__main__" :
     #getWeixinInfoList(id=1)
     #print getWeixinArticleUrls(weixin_info_id=1)
     
-    t=time.strptime('2014-3-7','%Y-%m-%d')
-    print time.strftime('%Y-%m-%d', t)
+#     t=time.strptime('2014-3-7','%Y-%m-%d')
+#     print time.strftime('%Y-%m-%d', t)
+    max_publish_date = getWeixinArticleMaxPublishDate(1)
+    print type(max_publish_date),max_publish_date
     
 
 
