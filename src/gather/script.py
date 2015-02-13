@@ -8,7 +8,7 @@ import datetime
 from gather import utils, dbutils
 import re
 import os
-from arrow.arrow import Arrow
+import arrow
 
 #抓取停止（抓取请求被禁止）
 is_end = False
@@ -16,40 +16,21 @@ is_end = False
 '''
 http://weixin.sogou.com 搜索的结果页的页数，并不准确，需要逼近最后一页确定总页数
 '''
-def get_page_total(weixin_info_id, openid, look_back=0):
+def get_page_total(weixin_info_id, openid):
     page_total = 1
     page_current = 1
     totalPages_retrieve_str = re.compile(r'"totalPages":(\d*)')
     page_retrieve_str = re.compile(r'"page":(\d*)')
-    publish_date_retrieve_str = re.compile(r'<date><!\[CDATA\[([^]]*)')
     while True:
-        if look_back>0:
-            '''
-            ('2014-12-08', '2015-2-8')
-            >>> a=time.strptime(s1, '%Y-%m-%d')
-            >>> b=time.strptime(s2, '%Y-%m-%d')
-            >>> time.mktime(a)-time.mktime(b)
-            -5356800.0
-            '''
-            pass
         page_src = utils.getSogouContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid="+openid+"&page="+str(page_current), sleep_time=1)
         if page_src is None:
-            is_end = True
             return 0
-        if look_back>0:
-            min_publish_dates = publish_date_retrieve_str.findall(page_src)
-            if len(min_publish_dates)>0:
-                min_publish_date_str=min_publish_dates[-1]
-                import arrow
-                min_publish_date = arrow.get(min_publish_date_str, 'YYYY-M-D')
-                max_publish_date = dbutils.getWeixinArticleMaxPublishDate(weixin_info_id)
-                #查询数据库gather_weixinarticle确定最大日期
         totalPages = totalPages_retrieve_str.findall(page_src)
         page = page_retrieve_str.findall(page_src)
         if len(totalPages)==0 or len(page)==0:
             print "ERROR: get_page_total error!"
             print page_src
-            break
+            return 0
         else:
             page_total = int(totalPages[0])
             page_current = int(page[0])
@@ -71,35 +52,73 @@ def get_article_list_urls(openid, page_total=1):
     return article_list_urls
 
 '''
-扫描搜狗上微信账号的文章列表页，获得文章标题title和文章链接url
+扫描搜狗上微信账号的文章列表页，获得文章标题title和文章链接url和发布时间
 '''
-def scan_article_list(article_list_urls):
-    article_urls = []
-    for article_list_url in article_list_urls:
-        page_src = utils.getSogouContent(article_list_url, sleep_time=1)
+def scan_article_list(weixin_info_id, openid, look_back=True):
+    article_infos = []
+    page_total = 1
+    page_current = 1
+    totalPages_retrieve_str = re.compile(r'"totalPages":(\d*)')
+    page_retrieve_str = re.compile(r'"page":(\d*)')
+    publish_date_regular_str = re.compile(r'<date><!\[CDATA\[([^]]*)')
+    title_url_regular_str = re.compile(r'<title><\!\[CDATA\[([^]]*)\]\]><[^/]*/title><url><\!\[CDATA\[([^]]*)' )
+    #
+    db_max_publish_date=None
+    if look_back:
+        db_max_publish_date_object = dbutils.getWeixinArticleMaxPublishDate(weixin_info_id)
+        if db_max_publish_date_object is None:
+            db_max_publish_date = arrow.get('2000-1-1', 'YYYY-M-D') #那时候还没微信
+        else:
+            db_max_publish_date = arrow.get(db_max_publish_date_object)
+    while True:
+        page_url = "http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid="+openid+"&page="+str(page_current)
+        page_src = utils.getSogouContent(page_url)
+        #获取文章信息（title/url/publish_date）
         if page_src is None:
-            is_end = True
+            print "ERROR: scan_article_list("+page_url+") error! page_src is None"
             return []
-        regular_str = re.compile(r'<title><\!\[CDATA\[([^]]*)\]\]><[^/]*/title><url><\!\[CDATA\[([^]]*)' )
-        datas = regular_str.findall(page_src)
-        #openid
-        publish_date_regular_str = re.compile(r'<date><\!\[CDATA\[([^]]*)')
+        datas = title_url_regular_str.findall(page_src)
         publish_dates = publish_date_regular_str.findall(page_src)
         if len(datas)==len(publish_dates):
             for index in range(len(datas)):
-                article_urls.append({"title":datas[index][0], "url":datas[index][1], "publish_date":publish_dates[index], } )
+                article_infos.append({"title":datas[index][0], "url":datas[index][1], "publish_date":publish_dates[index], } )
         else:
             #page_src存在特殊字符
             title_list = utils.parse_block_match(page_src, "<title><![CDATA[", "]]><\/title><url><![CDATA[")
             url_list = utils.parse_block_match(page_src, "]]><\/title><url><![CDATA[", "]]><\/url>")
             if len(title_list)==len(url_list) and len(url_list)==len(publish_dates):
                 for index in range(len(title_list)):
-                    article_urls.append({"title":title_list[index], "url":url_list[index], "publish_date":publish_dates[index], } )
+                    article_infos.append({"title":title_list[index], "url":url_list[index], "publish_date":publish_dates[index], } )
             else:
-                print "ERROR: scan_article_list("+article_list_url+") error! len(datas)="+str(len(datas))+", len(publish_date)="+str(len(publish_dates))
+                print "ERROR: scan_article_list("+page_url+") error! len(datas)="+str(len(datas))+", len(publish_date)="+str(len(publish_dates))
                 print page_src
-    print "weixin article total="+str(len(article_urls))
-    return article_urls
+                return []
+
+        #页面上最小的发布日期比数据库最大时，终止文章列表遍历
+        if look_back:
+            page_min_publish_dates = publish_date_regular_str.findall(page_src)
+            if len(page_min_publish_dates)>0:
+                page_min_publish_date_str=page_min_publish_dates[-1]
+                page_min_publish_date = arrow.get(page_min_publish_date_str, 'YYYY-M-D')
+                if page_min_publish_date<db_max_publish_date:
+                    return article_infos
+        #当前页数等于或大于总页数，终止文章列表遍历
+        totalPages = totalPages_retrieve_str.findall(page_src)
+        currentPage = page_retrieve_str.findall(page_src)
+        if len(totalPages)==0 or len(currentPage)==0:
+            #出现禁止页，抓取取消
+            print "ERROR: get_page_total error!"
+            print page_src
+            return []
+        else:
+            page_total = int(totalPages[0])
+            page_current = int(currentPage[0])
+        if(page_current>=page_total):
+            break
+        else:
+            page_current = page_current+1
+    print "scan_article_list, weixin_info_id="+str(weixin_info_id)+", size="+str(len(article_infos))
+    return article_infos
 
 '''
 抓取微信weixin_info_id的文章内容，article_urls为文章标题title和链接url
@@ -177,7 +196,7 @@ weixin_info_id：微信信息表WeixinInfo的id
 openid：微信公众账号的openid
 is_add：是否增量扫描，默认是True
 '''
-def scan_article(weixin_info_id=None, openid=None, is_add=True, look_back=0):
+def scan_article(weixin_info_id=None, openid=None, is_add=True, look_back=True):
     if is_end:
         print "is_end="+str(is_end)
         return
@@ -194,9 +213,7 @@ def scan_article(weixin_info_id=None, openid=None, is_add=True, look_back=0):
         weixin_name = weixinInfo.weixin_name
         openid = weixinInfo.openid
         weixin_no = weixinInfo.weixin_no
-        page_total = get_page_total(weixin_info_id, openid, look_back)
-        article_list_urls = get_article_list_urls(openid, page_total)
-        article_urls = scan_article_list(article_list_urls)
+        article_urls = scan_article_list(weixin_info_id, openid, look_back)
         if is_add:
             article_urls = article_urls_filter(article_urls, weixin_info_id)
         update_num = scan_article_content(article_urls, weixin_info_id, weixin_name, weixin_no, openid, hasThumbnail=True)
@@ -233,6 +250,7 @@ def search_weixin_info(keyword, is_all=False):
         else:
             print "ERROR: search_weixin_info("+keyword+") error! len(datas)="+str(len(datas))+", len(openids)="+str(len(openids))
             print page_src
+            return []
         #
         nextpage_regular_str = re.compile(r'<a id="sogou_next" href="([^"]*)')
         nextpage = nextpage_regular_str.findall(page_src)

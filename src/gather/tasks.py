@@ -18,7 +18,7 @@ def add(x, y):
     return x + y
 
 @shared_task
-def scan_article(weixin_info_id=None, weixin_nos=None):
+def scan_article(weixin_info_id=None, weixin_nos=None, look_back=True):
     from gather import script
     if weixin_info_id is not None:
         print "task: scan_article start. weixin_info_id="+str(weixin_info_id)
@@ -39,16 +39,29 @@ def scan_article(weixin_info_id=None, weixin_nos=None):
                                 weixinInfo.openid=weixin_info[2]
                                 weixinInfo.save()
                                 break
-                    script.scan_article(weixin_info_id=weixinInfo.id)
+                    script.scan_article(weixin_info_id=weixinInfo.id, look_back)
                 else:
                     print "scan_article: can not find weixin_no="+weixin_no
     else:
         print "scan_article: need params(weixin_info_id or weixin_nos)"
  
+'''
+ 依据搜索列表的文章有序，只检查新增的文章
+'''
 @shared_task   
 def scan_all_article():
     from gather.models import WeixinInfo
     weixinInfoList = WeixinInfo.objects.all()
     for weixinInfo in weixinInfoList:
-        scan_article(weixin_info_id=weixinInfo.id)
+        scan_article(weixin_info_id=weixinInfo.id, look_back=True)
+    
+'''
+严格检查所有的文章
+'''    
+@shared_task   
+def scan_all_article_unlookback():
+    from gather.models import WeixinInfo
+    weixinInfoList = WeixinInfo.objects.all()
+    for weixinInfo in weixinInfoList:
+        scan_article(weixin_info_id=weixinInfo.id, look_back=False)
 
