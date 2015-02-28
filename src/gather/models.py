@@ -5,6 +5,7 @@ Created on 2014年10月20日
 @author: hyx
 '''
 from django.db import models
+from MySQLdb.constants.FIELD_TYPE import NULL
 # from DjangoUeditor.models import UEditorField
 
 class ImportWeixinInfo(models.Model):
@@ -82,6 +83,7 @@ class WeixinArticle(models.Model):
     publish_date = models.DateField(verbose_name='发布日期')
     thumbnail_url = models.CharField(max_length=1024, verbose_name='缩略图源URL')
     thumbnail_path = models.CharField(max_length=1024, verbose_name='缩略图服务器路径')
+    reproduced_num = models.IntegerField(default=NULL, verbose_name='文章转载量')
     create_date = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')
     
     def __unicode__(self):
@@ -91,6 +93,39 @@ class WeixinArticle(models.Model):
         ordering = ['-create_date']
         verbose_name='微信文章' 
         verbose_name_plural='微信文章'
+        
+        
+class WeixinArticleReproduced(models.Model):
+    weixin_info = models.ForeignKey(WeixinInfo, verbose_name='微信号信息')
+    weixin_article = models.ForeignKey(WeixinArticle, verbose_name='微信文章')
+    reproduced_num = models.IntegerField(default=NULL,  verbose_name='文章转载量')
+    by_text = models.CharField(max_length=1024, verbose_name='依据的文章文本')
+    create_date = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')
+    
+    def __unicode__(self):
+        return str(self.weixin_article)+": "+str(self.reproduced_num)
+    
+    class Meta:
+        ordering = ['-reproduced_num']
+        verbose_name='微信文章转载量' 
+        verbose_name_plural='微信文章转载量'
+        
+class WeixinArticleReproducedRecord(models.Model):
+    weixin_article_reproduced = models.ForeignKey(WeixinArticleReproduced, verbose_name='微信文章转载量')
+    weixin_name = models.CharField(max_length=256, verbose_name='微信名')
+    openid = models.CharField(max_length=256, verbose_name='微信openid')
+    title = models.CharField(max_length=256, verbose_name='文章标题')
+    url = models.CharField(max_length=1024, verbose_name='文章源URL')
+    publish_date = models.DateField(verbose_name='发布日期')
+    create_date = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')
+    
+    def __unicode__(self):
+        return str(self.weixin_article_reproduced)+": "+str(self.weixin_name)+":"+str(self.title)
+    
+    class Meta:
+        ordering = ['-create_date']
+        verbose_name='微信文章转载记录' 
+        verbose_name_plural='微信文章转载记录'
         
         
     

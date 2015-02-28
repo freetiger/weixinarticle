@@ -7,8 +7,8 @@ Created on 2015年1月14日
 
 import datetime
 import MySQLdb
-from gather.models import WeixinInfo
-import time
+from gather.models import WeixinInfo, WeixinArticle
+from MySQLdb.constants.FIELD_TYPE import NULL
 
 def getConnect():
     host = 'localhost'
@@ -41,6 +41,60 @@ def getWeixinArticleUrls(weixin_info_id):
     conn.close()
     
     return urls
+
+def getWeixinArticleList(id=None, weixin_info_id=None, weixin_name=None, weixin_no=None, openid=None, reproduced_num=None, offset=None, limit=None):
+    sql = []
+    sql.append("SELECT id, weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path, reproduced_num, create_date FROM gather_weixinarticle ")
+    if id is not None:
+        sql.append(" and id="+str(id))
+    if weixin_info_id is not None:
+        sql.append(" and weixin_info_id="+str(weixin_info_id))
+    if weixin_name is not None:
+        sql.append(" and weixin_name='"+weixin_name+"'")
+    if weixin_no is not None:
+        sql.append(" and weixin_no='"+weixin_no+"'")
+    if openid is not None:
+        sql.append(" and openid='"+openid+"'")
+    if reproduced_num is not None:
+        if reproduced_num is NULL:
+            sql.append(" and reproduced_num is NULL" )
+        else:
+            sql.append(" and reproduced_num="+str(reproduced_num) ) #再升华TODO
+    if offset is not None and limit is not None:
+        sql.append(" limit "+str(offset)+","+str(limit))
+        
+    if len(sql)>1:
+        if sql[1].count("and")>0:
+            sql[1] = " WHERE "+sql[1][4:]
+        elif sql[1].count("limit")>0:
+            pass
+        else:
+            print "getWeixinArticleList sql error!"
+    conn = getConnect()
+    cur = conn.cursor()
+    cur.execute("".join(sql))
+    datas = cur.fetchall()  
+    weixinArticleList = []
+    for data in datas:
+        weixinArticle = WeixinArticle()
+        weixinArticle.id = data[0]
+        weixinArticle.weixin_info_id = data[1]
+        weixinArticle.name = data[2]
+        weixinArticle.weixin_no = data[3]
+        weixinArticle.openid = data[4]
+        weixinArticle.title = data[5]
+        weixinArticle.url = data[6]
+        weixinArticle.content = data[7]
+        weixinArticle.publish_date = data[8]
+        weixinArticle.thumbnail_url = data[9]
+        weixinArticle.thumbnail_path = data[10]
+        weixinArticle.reproduced_num = data[11]
+        weixinArticle.create_date = data[12]
+        weixinArticleList.append(weixinArticle)
+    cur.close()
+    conn.close()
+    
+    return weixinArticleList
 
 def getWeixinArticleMaxPublishDate(weixin_info_id):
     conn = getConnect()

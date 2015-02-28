@@ -9,6 +9,7 @@ from gather import utils, dbutils
 import re
 import os
 import arrow
+from MySQLdb.constants.FIELD_TYPE import NULL
 
 #抓取停止（抓取请求被禁止）
 is_end = False
@@ -223,6 +224,95 @@ def scan_article(weixin_info_id=None, openid=None, is_add=True, look_back=True):
     #
     return ""
 
+def gen_weixin_article_reproduced(weixin_info_id=None):
+    weixinArticleList = dbutils.getWeixinArticleList(weixin_info_id=weixin_info_id, reproduced_num=NULL, offset=0, limit=10)
+    for weixinArticle in weixinArticleList:
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(weixinArticle.content)
+        js_content = soup.find(id="js_content")
+        js_content_text = js_content.get_text(strip=True)
+        js_content_text_len = len(js_content_text)
+        print js_content_text_len/4, js_content_text[js_content_text_len/4:js_content_text_len/4+40]
+        print js_content_text_len/4*2, js_content_text[js_content_text_len/4*2:js_content_text_len/4*2+40]
+        print js_content_text_len/4*3, js_content_text[js_content_text_len/4*3:js_content_text_len/4*3+40]
+        print js_content_text
+        break
+        #存储weixinArticleReproducedRecord_list
+        from gather.models import WeixinArticleReproduced
+        weixinArticleReproduced = WeixinArticleReproduced()
+        weixinArticleReproduced.weixin_info_id = weixin_info_id
+        weixinArticleReproduced.weixin_article_id = weixinArticle.id
+        weixinArticleReproduced.reproduced_num = 
+        weixinArticleReproduced.by_text = 
+        weixinArticleReproduced.weixin_info_id = 
+        weixinArticleReproduced.weixin_info_id =   
+    
+def search_weixin_article(keyword):
+    print "search_weixin_article start, keyword="+keyword
+    import urllib
+    weixinArticleReproducedRecord_list = []
+    
+    #keyword=吹牛说起大学就预测出微博类的产品会火，比特币刚出来几乎还没什么人知道的时候还挖了
+    #keyword=%E5%90%B9%E7%89%9B%E8%AF%B4%E8%B5%B7%E5%A4%A7%E5%AD%A6%E5%B0%B1%E9%A2%84%E6%B5%8B%E5%87%BA%E5%BE%AE%E5%8D%9A%E7%B1%BB%E7%9A%84%E4%BA%A7%E5%93%81%E4%BC%9A%E7%81%AB%EF%BC%8C%E6%AF%94%E7%89%B9%E5%B8%81%E5%88%9A%E5%87%BA%E6%9D%A5%E5%87%A0%E4%B9%8E%E8%BF%98%E6%B2%A1%E4%BB%80%E4%B9%88%E4%BA%BA%E7%9F%A5%E9%81%93%E7%9A%84%E6%97%B6%E5%80%99%E8%BF%98%E6%8C%96%E4%BA%86
+    keyword_len = len(keyword)/3
+    is_completed = True
+    page = 1
+    #标红
+    page_red_str = re.compile(r'<!--red_end--></em>.{1}<em><!--red_beg-->')
+    #发布日期：var date = new Date(time * 1000);
+    page_publish_date_str = re.compile(r"vrTimeHandle552write\('([^']*)'")
+    while True:
+        page_url = "http://weixin.sogou.com/weixin?type=2&ie=utf8&page="+str(page)+"&"+urllib.urlencode({"query":keyword})
+        page_src = utils.getSogouContent(page_url, sleep_time=1)
+        #预处理，替换单符号间隔</em>,<em>等，“,”只是用来占一个字符位
+        page_src, number=page_red_str.subn(",", page_src)
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(page_src)
+        #
+        sogou_weixin_name_openid_list = []
+        weixin_account_list = soup.find_all("a", id="weixin_account")
+        for weixin_account in weixin_account_list:
+            sogou_weixin_name_openid_list.append((weixin_account.get("title"), weixin_account.get("i")))
+        #
+        sogou_article_title_url_list = []
+        h4_list = soup.find_all("h4")
+        for h4 in h4_list:
+            sogou_article_title_url_list.append((h4.a.get_text(), h4.a.get("href")))
+        #
+        sogou_publish_date_list = []
+        publish_date_datas = page_publish_date_str.findall(page_src)
+        for publish_date_data in publish_date_datas:
+            sogou_publish_date_list.append(str(arrow.get(publish_date_data).date()))
+        #
+        sogou_summary_list = soup.find_all("p", id=re.compile("sogou_vr_*"))
+        for index in range(len(sogou_summary_list)):
+            red_item_list = sogou_summary_list[index].find_all("em" )
+            for red_item in red_item_list:
+                if len(red_item.get_text())>=keyword_len:
+                    print len(red_item.get_text()),red_item.get_text()
+                    #匹配到了文章
+                    is_completed = False
+                    from gather.models import WeixinArticleReproducedRecord
+                    weixinArticleReproducedRecord = WeixinArticleReproducedRecord()
+                    weixinArticleReproducedRecord.weixin_name = sogou_weixin_name_openid_list[index][0]
+                    weixinArticleReproducedRecord.openid = sogou_weixin_name_openid_list[index][1]
+                    weixinArticleReproducedRecord.title = sogou_article_title_url_list[index][0]
+                    weixinArticleReproducedRecord.url = sogou_article_title_url_list[index][1]
+                    weixinArticleReproducedRecord.publish_date = sogou_publish_date_list[index]
+                    weixinArticleReproducedRecord_list.append(weixinArticleReproducedRecord)
+                    break
+                else:
+                    is_completed = True
+            if is_completed:
+                break
+        if is_completed:
+            break
+        else:
+            page = page+1
+        break
+    return weixinArticleReproducedRecord_list
+    
+
 '''
 搜索keyword相关的微信号，weixin_name、weixin_no、openid
 '''
@@ -303,7 +393,8 @@ def get_xici_proxies():
     
 
 if __name__ == "__main__":   
-    pass
+#     gen_weixin_article_reproduced()
+    search_weixin_article(keyword="吹牛说起大学就预测出微博类的产品会火，比特币刚出来几乎还没什么人知道的时候还挖了")
     #scan_article(openid="oIWsFt-Atb62Noyz4nKX1nvrmFHQ")
     #print search_weixin_info("晓说", True)
 #     article_list_urls = ["http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt21qMCAR53L_nCd27iMBnOs&page=7", ]

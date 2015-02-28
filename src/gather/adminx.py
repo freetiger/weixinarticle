@@ -8,7 +8,7 @@ from django.utils.importlib import import_module
 import xadmin
 from xadmin.views.base import CommAdminView
 
-from gather.models import FilterWeixinInfo, ImportWeixinInfo, WeixinInfo, WeixinArticle
+from gather.models import FilterWeixinInfo, ImportWeixinInfo, WeixinInfo, WeixinArticle, WeixinArticleReproduced, WeixinArticleReproducedRecord
 from plugins.listaction import AddWeixinNoAction
 
 
@@ -77,10 +77,22 @@ class WeixinArticleAdmin(BaseAdmin):
     #操作列表
     list_operate=['<a href="/gather/article_show/{{pk}}/" target="_blank">查看文章</a>', '<a href="{{url}}" target="_blank">查看来源</a>',]
 
+#微信列表
+class WeixinArticleReproducedAdmin(BaseAdmin):
+    list_display = ('weixin_info', 'weixin_article', 'reproduced_num', 'create_date', )
+    #设置搜索框和其模糊搜索的范围
+    search_fields = ('weixin_info.weixin_name', 'weixin_article.title', ) 
+    
+#微信列表
+class WeixinArticleReproducedRecordAdmin(BaseAdmin):
+    list_display = ('weixin_article_reproduced', 'weixin_name', 'openid', 'title', 'url', 'publish_date', 'create_date', )
+
 xadmin.site.register(ImportWeixinInfo, ImportWeixinInfoAdmin)
 xadmin.site.register(FilterWeixinInfo, FilterWeixinInfoAdmin)
 xadmin.site.register(WeixinInfo, WeixinInfoAdmin)
 xadmin.site.register(WeixinArticle, WeixinArticleAdmin)
+xadmin.site.register(WeixinArticleReproduced, WeixinArticleReproducedAdmin)
+xadmin.site.register(WeixinArticleReproducedRecord, WeixinArticleReproducedRecordAdmin)
 
 #自定义插件导入   
 import_module('plugins.operatelist')
