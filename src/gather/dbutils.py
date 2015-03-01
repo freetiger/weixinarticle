@@ -204,6 +204,26 @@ def getWeixinInfoList(id=None, weixin_name=None, weixin_no=None, openid=None, of
     
     return weixinInfoList
 
+def saveWeixinArticleReproduced(weixin_info_id, weixin_article_id, reproduced_num, by_text):
+    conn = getConnect()
+    cur = conn.cursor()
+    cur.execute("insert into gather_weixinarticlereproduced(weixin_info_id, weixin_article_id, reproduced_num, by_text, create_date) values (%s,%s,%s,%s,%s)" , (weixin_info_id, weixin_article_id, reproduced_num, by_text, datetime.datetime.now()))
+    weixin_article_reproduced_id=int(cur.lastrowid)
+    conn.commit()
+    cur.close()
+    conn.close()
+    return weixin_article_reproduced_id
+
+def saveWeixinArticleReproducedRecord(weixin_article_reproduced_id, weixin_name, openid, title, url, publish_date):
+    conn = getConnect()
+    cur = conn.cursor()
+    cur.execute("insert into gather_weixinarticlereproducedrecord(weixin_article_reproduced_id, weixin_name, openid, title, url, publish_date, create_date) values (%s,%s,%s,%s,%s,%s,%s)" , (weixin_article_reproduced_id, weixin_name, openid, title, url, publish_date, datetime.datetime.now()))
+    weixin_article_reproduced_record_id=int(cur.lastrowid)
+    conn.commit()
+    cur.close()
+    conn.close()
+    return weixin_article_reproduced_record_id
+
 if __name__ == "__main__" :
     #getWeixinInfoList(id=1)
     #print getWeixinArticleUrls(weixin_info_id=1)

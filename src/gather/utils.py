@@ -247,7 +247,7 @@ def getResponse(url, post_datas={}, sleep_time=0, proxies={}, headers={}, urllib
             resp = urllib2.urlopen(req)
             print "request: "+str(url)
     except:
-        print "ERROR: request time out. url="+url,
+        print "ERROR: request time out. url="+url
 
     return resp
 

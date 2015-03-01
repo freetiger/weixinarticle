@@ -227,34 +227,55 @@ def scan_article(weixin_info_id=None, openid=None, is_add=True, look_back=True):
 def gen_weixin_article_reproduced(weixin_info_id=None):
     weixinArticleList = dbutils.getWeixinArticleList(weixin_info_id=weixin_info_id, reproduced_num=NULL, offset=0, limit=10)
     for weixinArticle in weixinArticleList:
+        print "gen_weixin_article_reproduced"+str(weixinArticle.weixin_info_id)+":"+weixinArticle.title
         from bs4 import BeautifulSoup
         soup = BeautifulSoup(weixinArticle.content)
         js_content = soup.find(id="js_content")
-        js_content_text = js_content.get_text(strip=True)
-        js_content_text_len = len(js_content_text)
-        print js_content_text_len/4, js_content_text[js_content_text_len/4:js_content_text_len/4+40]
-        print js_content_text_len/4*2, js_content_text[js_content_text_len/4*2:js_content_text_len/4*2+40]
-        print js_content_text_len/4*3, js_content_text[js_content_text_len/4*3:js_content_text_len/4*3+40]
-        print js_content_text
-        break
-        #存储weixinArticleReproducedRecord_list
-        from gather.models import WeixinArticleReproduced
-        weixinArticleReproduced = WeixinArticleReproduced()
-        weixinArticleReproduced.weixin_info_id = weixin_info_id
-        weixinArticleReproduced.weixin_article_id = weixinArticle.id
-        weixinArticleReproduced.reproduced_num = 
-        weixinArticleReproduced.by_text = 
-        weixinArticleReproduced.weixin_info_id = 
-        weixinArticleReproduced.weixin_info_id =   
+        print len(js_content.find_all("p")),js_content.find_all("p")[0].get_text(), js_content.find_all("p")
+#         js_content_text = js_content.get_text(strip=True)#html页面的看见字符
+#         js_content_text_len = len(js_content_text)
+#         keyword_1 = js_content_text[js_content_text_len/4:js_content_text_len/4+40]
+#         keyword_2 = js_content_text[js_content_text_len/4*2:js_content_text_len/4*2+40]
+#         keyword_3 = js_content_text[js_content_text_len/4*3:js_content_text_len/4*3+40]
+#         weixinArticleReproducedRecord_list_1 = search_weixin_article(keyword=keyword_1)
+#         weixinArticleReproducedRecord_list_2 = search_weixin_article(keyword=keyword_2)
+#         weixinArticleReproducedRecord_list_3 = search_weixin_article(keyword=keyword_3)
+#         max_len = max(len(weixinArticleReproducedRecord_list_1), len(weixinArticleReproducedRecord_list_2), len(weixinArticleReproducedRecord_list_3))
+#         min_len = min(len(weixinArticleReproducedRecord_list_1), len(weixinArticleReproducedRecord_list_2), len(weixinArticleReproducedRecord_list_3))
+#         weixinArticleReproducedRecord_list = None
+#         keyword = None
+#         if min_len<=len(weixinArticleReproducedRecord_list_1)<=max_len:
+#             weixinArticleReproducedRecord_list = weixinArticleReproducedRecord_list_1
+#             keyword = keyword_1
+#         elif min_len<=len(weixinArticleReproducedRecord_list_2)<=max_len:
+#             weixinArticleReproducedRecord_list = weixinArticleReproducedRecord_list_2
+#             keyword = keyword_2
+#         else:
+#             weixinArticleReproducedRecord_list = weixinArticleReproducedRecord_list_3
+#             keyword = keyword_3
+#         #存储weixinArticleReproducedRecord_list
+#         weixin_article_reproduced_id = dbutils.saveWeixinArticleReproduced(weixinArticle.weixin_info_id, weixinArticle.id, len(weixinArticleReproducedRecord_list), keyword)
+#         for weixinArticleReproducedRecord in weixinArticleReproducedRecord_list:
+#             dbutils.saveWeixinArticleReproducedRecord(weixin_article_reproduced_id, weixinArticleReproducedRecord.weixin_name, weixinArticleReproducedRecord.openid, weixinArticleReproducedRecord.title, weixinArticleReproducedRecord.url, weixinArticleReproducedRecord.publish_date)  
     
 def search_weixin_article(keyword):
+    '''
+    文章转载量的统计
+    文章被抄袭，title大多会被修改，且title关键词太多，搜索引擎采取的模糊匹配，短词组匹配率高，采用title判断转载量准确率低。；
+    大多抄袭文章都不会认真修改，中间段落基本不会被修改，随机截取文章中的稍长句子，到搜索引擎中搜索匹配很高。
+    考虑绝大数情况的准确率，一篇文章需要多次截取匹配（暂定三次），开头结尾避免采用。
+    
+    文章搜素结果页源码有：
+    <!--STATUS total 10 time 115 page 2 maxEnd 24 totalItems 24-->
+    文章数：totalItems 24
+    '''
     print "search_weixin_article start, keyword="+keyword
     import urllib
     weixinArticleReproducedRecord_list = []
     
     #keyword=吹牛说起大学就预测出微博类的产品会火，比特币刚出来几乎还没什么人知道的时候还挖了
     #keyword=%E5%90%B9%E7%89%9B%E8%AF%B4%E8%B5%B7%E5%A4%A7%E5%AD%A6%E5%B0%B1%E9%A2%84%E6%B5%8B%E5%87%BA%E5%BE%AE%E5%8D%9A%E7%B1%BB%E7%9A%84%E4%BA%A7%E5%93%81%E4%BC%9A%E7%81%AB%EF%BC%8C%E6%AF%94%E7%89%B9%E5%B8%81%E5%88%9A%E5%87%BA%E6%9D%A5%E5%87%A0%E4%B9%8E%E8%BF%98%E6%B2%A1%E4%BB%80%E4%B9%88%E4%BA%BA%E7%9F%A5%E9%81%93%E7%9A%84%E6%97%B6%E5%80%99%E8%BF%98%E6%8C%96%E4%BA%86
-    keyword_len = len(keyword)/3
+    keyword_len = len(keyword)
     is_completed = True
     page = 1
     #标红
@@ -262,7 +283,7 @@ def search_weixin_article(keyword):
     #发布日期：var date = new Date(time * 1000);
     page_publish_date_str = re.compile(r"vrTimeHandle552write\('([^']*)'")
     while True:
-        page_url = "http://weixin.sogou.com/weixin?type=2&ie=utf8&page="+str(page)+"&"+urllib.urlencode({"query":keyword})
+        page_url = "http://weixin.sogou.com/weixin?type=2&ie=utf8&page="+str(page)+"&"+urllib.urlencode({"query":keyword.encode('utf-8')})
         page_src = utils.getSogouContent(page_url, sleep_time=1)
         #预处理，替换单符号间隔</em>,<em>等，“,”只是用来占一个字符位
         page_src, number=page_red_str.subn(",", page_src)
@@ -288,6 +309,7 @@ def search_weixin_article(keyword):
         for index in range(len(sogou_summary_list)):
             red_item_list = sogou_summary_list[index].find_all("em" )
             for red_item in red_item_list:
+                print len(red_item.get_text()),red_item.get_text()
                 if len(red_item.get_text())>=keyword_len:
                     print len(red_item.get_text()),red_item.get_text()
                     #匹配到了文章
@@ -309,7 +331,6 @@ def search_weixin_article(keyword):
             break
         else:
             page = page+1
-        break
     return weixinArticleReproducedRecord_list
     
 
@@ -393,8 +414,8 @@ def get_xici_proxies():
     
 
 if __name__ == "__main__":   
-#     gen_weixin_article_reproduced()
-    search_weixin_article(keyword="吹牛说起大学就预测出微博类的产品会火，比特币刚出来几乎还没什么人知道的时候还挖了")
+    gen_weixin_article_reproduced(weixin_info_id=5)
+#     search_weixin_article(keyword="吹牛说起大学就预测出微博类的产品会火，比特币刚出来几乎还没什么人知道的时候还挖了")
     #scan_article(openid="oIWsFt-Atb62Noyz4nKX1nvrmFHQ")
     #print search_weixin_info("晓说", True)
 #     article_list_urls = ["http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt21qMCAR53L_nCd27iMBnOs&page=7", ]
