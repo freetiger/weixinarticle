@@ -65,6 +65,8 @@ WSGI_APPLICATION = 'weixinarticle.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 if socket.gethostname() == 'iZ23au1sj8vZ':
+    from gather import utils
+    database_password = utils.get_real_config("database_password")
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -72,7 +74,7 @@ if socket.gethostname() == 'iZ23au1sj8vZ':
             'PORT': '3306',
             'NAME': 'weixinarticle',
             'USER': 'root',
-            'PASSWORD': 'nidongde',
+            'PASSWORD': database_password,
         }
     }
 else:
@@ -124,8 +126,8 @@ else:
 #缩略图配置
 THUMBNAIL_SRC_ROOT = MEDIA_ROOT+"thumbnail_src/"
 THUMBNAIL_TGT_ROOT = MEDIA_ROOT+"thumbnail_tgt/"
-THUMBNAIL_WIDTH = 128
-THUMBNAIL_HEIGHT = 128
+THUMBNAIL_WIDTH = 140
+THUMBNAIL_HEIGHT = 100
 
 #celery任务调度配置
 # 配置djcelery相关参数，ResultStore默认存储在数据库可不必重写 ，
@@ -144,11 +146,6 @@ CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
 CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend'
 CELERY_RESULT_BACKEND='djcelery.backends.cache:CacheBackend'
 
-#配置提示
-print "---------------------------------------------------------"
-print "please rewrite weixinarticle.settings.DATABASES:"+str(DATABASES["default"]["PASSWORD"])
-print "please rewrite gather.dbutils.password"
-print "---------------------------------------------------------"
 
 
 

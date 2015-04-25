@@ -488,7 +488,7 @@ def download_thumbnail_weixin_image(download_url, src_file, thumbnail_file, post
         print traceback.format_exc()
     return False
         
-def thumbnail(infile, outfile, width, height):
+def thumbnail_2(infile, outfile, width, height):
     import Image
     try:
         size = (width, height)
@@ -501,6 +501,80 @@ def thumbnail(infile, outfile, width, height):
     except:
         print "thumbnail except!"
     return False
+
+#UPDATE gather_weixinarticle SET pic_url=CONCAT('media/thumbnail_tgt/',weixin_no,'/',id,'.jpg') WHERE pic_url IS NULL;
+def thumbnail(infile, outfile, width, height):
+    import Image
+    try:
+        im = Image.open(infile)
+        box=None
+        src_width,src_height=im.size
+        if src_width>width and src_height>height:
+            #src_width/src_height >, src_width need by cutted
+            print 'all big'
+            if (src_width*height)>(width*src_height):
+                print 'src_width/src_height >, src_width need by cutted'
+                temp_src_width=(width*src_height)/height
+                left=(src_width-temp_src_width)/2
+                upper=0
+                right=left+temp_src_width
+                lower=src_height
+                box=(left,upper,right,lower)
+                print (src_width, src_height, width, height)
+                print box
+            else:
+                print 'src_width/src_height <, src_height need by cutted'
+                temp_src_height=(src_width*height)/width
+                left=0
+                upper=(src_height-temp_src_height)/2
+                right=src_width
+                lower=upper+temp_src_height
+                box=(left,upper,right,lower)
+                print (src_width, src_height, width, height)
+                print box
+        elif src_width>width and src_height<=height:
+            print 'src_width>, src_height<='
+            temp_src_width=width
+            left=(src_width-temp_src_width)/2
+            upper=0
+            right=left+temp_src_width
+            lower=src_height
+            box=(left,upper,right,lower)
+            print (src_width, src_height, width, height)
+            print box
+        elif src_width<=width and src_height>height:
+            print 'src_width<=, src_height>'
+            temp_src_height=height
+            left=0
+            upper=(src_height-temp_src_height)/2
+            right=src_width
+            lower=upper+temp_src_height
+            box=(left,upper,right,lower)
+            print (src_width, src_height, width, height)
+            print box
+        else:
+            print 'src_width<, src_height<'
+        if box is None:
+            im.save(outfile, "JPEG")
+        else:
+            region = im.crop(box)
+            size = (width, height)
+            region.thumbnail(size, Image.ANTIALIAS)
+            region.save(outfile, "JPEG")
+            return True
+    except IOError:
+        traceback.print_exc()
+        print "cannot create thumbnail for '%s'" % infile
+    except:
+        traceback.print_exc()
+        print "thumbnail except!"
+    return False
+
+def get_real_config(config_name):
+    import imp 
+    weixinarticle_config = imp.load_source('weixinarticle_config', '/var/www/script/weixinarticle_config.py')
+    return eval("weixinarticle_config."+config_name)
+
 if __name__ == "__main__":   
     download_weixin_image("http://mmbiz.qpic.cn/mmbiz/DU5uicRE9EFpLuEgbEptw2KI6ozsWSdCicNEwhplXvSGG5uuHORa1PBlib0YjMcXRL8bRkQt7QPuicIQN0hPV50qcQ/0", "d:/weixin_image22333.jpeg")
 #     thumbnail("d:/weixin_image.jpeg", "d:/weixin_image.thumbnail.jpeg", 128,128)

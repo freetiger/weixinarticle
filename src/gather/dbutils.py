@@ -15,8 +15,14 @@ def getConnect():
     port = 3306
     database = 'weixinarticle'
     user = 'root'
-    password = '1161hyx'
     charset="utf8"
+    import socket
+    if socket.gethostname() == 'iZ23au1sj8vZ':
+        from gather import utils
+        password = utils.get_real_config("database_password")
+    else:
+        password = '1161hyx'
+    
     return MySQLdb.connect(host=host, port=port, db=database,user=user,passwd=password,charset=charset)
 
 def saveWeixinArticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, thumbnail_url, thumbnail_path):
@@ -106,7 +112,7 @@ def getWeixinArticleMaxPublishDate(weixin_info_id):
     
     return datas[0][0] if len(datas)>0 else None
 
-def updateWeixinArticleById(id, weixin_name=None, weixin_no=None, openid=None, publish_date=None, thumbnail_url=None, thumbnail_path=None):
+def updateWeixinArticleById(id, weixin_name=None, weixin_no=None, openid=None, publish_date=None, thumbnail_url=None, thumbnail_path=None, pic_url=None):
     updateSql = []
     updateSql.append("UPDATE gather_weixinarticle SET ")
     if weixin_name is not None:
@@ -121,12 +127,14 @@ def updateWeixinArticleById(id, weixin_name=None, weixin_no=None, openid=None, p
         updateSql.append(",thumbnail_url='"+str(thumbnail_url)+"'")
     if thumbnail_path is not None:
         updateSql.append(",thumbnail_path='"+thumbnail_path+"'")
+    if pic_url is not None:
+        updateSql.append(",pic_url='"+pic_url+"'")
     updateSql.append(" WHERE id="+str(id))
     if len(updateSql)>2:
         if updateSql[1].count(",")>0:
             updateSql[1] = updateSql[1][1:]
         else:
-            print "updateWeixinInfoById sql error!"
+            print "updateWeixinInfoById sql error!"+str(updateSql)
     conn = getConnect()
     cur = conn.cursor()
     cur.execute("".join(updateSql))

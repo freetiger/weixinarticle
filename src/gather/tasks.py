@@ -39,7 +39,7 @@ def scan_article(weixin_info_id=None, weixin_nos=None, look_back=True):
                                 weixinInfo.openid=weixin_info[2]
                                 weixinInfo.save()
                                 break
-                    script.scan_article(weixin_info_id=weixinInfo.id, look_back)
+                    script.scan_article(weixin_info_id=weixinInfo.id, look_back=look_back)
                 else:
                     print "scan_article: can not find weixin_no="+weixin_no
     else:

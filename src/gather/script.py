@@ -72,8 +72,18 @@ def scan_article_list(weixin_info_id, openid, look_back=True):
         else:
             db_max_publish_date = arrow.get(db_max_publish_date_object)
     while True:
+        headers = {
+            "Accept":"*/*",
+            "Accept-Encoding":"gzip,deflate,sdch",
+            "Accept-Language":"zh-CN,zh;q=0.8,en;q=0.6,zh-TW;q=0.4",
+            "Cache-Control":"max-age=0",
+            "Connection":"keep-alive",
+            "Host":"weixin.sogou.com",
+            "Referer":"http://weixin.sogou.com/gzh?openid="+openid,
+            "User-Agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.143 Safari/537.36",
+        }
         page_url = "http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid="+openid+"&page="+str(page_current)
-        page_src = utils.getSogouContent(page_url)
+        page_src = utils.getSogouContent(url=page_url, headers=headers)
         #获取文章信息（title/url/publish_date）
         if page_src is None:
             print "ERROR: scan_article_list("+page_url+") error! page_src is None"
@@ -161,7 +171,7 @@ def scan_article_content(article_urls, weixin_info_id, weixin_name, weixin_no, o
             for index in range(len(datas)):
                 result = utils.download_thumbnail_weixin_image(datas[index].replace("?tp=webp", ""), str(weixin_no)+"/"+str(weixin_article_id)+".jpg", str(weixin_no)+"/"+str(weixin_article_id)+".jpg" )
                 if result:
-                    dbutils.updateWeixinArticleById(weixin_article_id, thumbnail_url=datas[index])
+                    dbutils.updateWeixinArticleById(weixin_article_id, thumbnail_url=datas[index], pic_url="media/thumbnail_tgt/"+str(weixin_no)+"/"+str(weixin_article_id)+".jpg")
                     break
     print "Newly added article total="+str(count)
     return count
@@ -212,8 +222,13 @@ def scan_article(weixin_info_id=None, openid=None, is_add=True, look_back=True):
     for weixinInfo in weixinInfoList:
         weixin_info_id = weixinInfo.id
         weixin_name = weixinInfo.weixin_name
-        openid = weixinInfo.openid
         weixin_no = weixinInfo.weixin_no
+        if weixinInfo.openid is None or weixinInfo.openid.strip()=='':
+            openid = get_weixin_info_openid(weixin_name, weixin_no)
+            if openid is not None:
+                dbutils.updateWeixinInfoById(weixin_info_id,openid=openid)
+        else:
+            openid = weixinInfo.openid
         article_urls = scan_article_list(weixin_info_id, openid, look_back)
         if is_add:
             article_urls = article_urls_filter(article_urls, weixin_info_id)
@@ -223,6 +238,15 @@ def scan_article(weixin_info_id=None, openid=None, is_add=True, look_back=True):
         return ""
     #
     return ""
+
+def get_weixin_info_openid(weixin_name, weixin_no):
+    weixin_infos = search_weixin_info(weixin_name)
+    for weixin_info in weixin_infos:
+        if weixin_info[1]==weixin_no:
+            return weixin_info[2]
+        else:
+            pass
+    return None
 
 def gen_weixin_article_reproduced(weixin_info_id=None):
     weixinArticleList = dbutils.getWeixinArticleList(weixin_info_id=weixin_info_id, reproduced_num=NULL, offset=0, limit=10)
@@ -414,12 +438,13 @@ def get_xici_proxies():
     
 
 if __name__ == "__main__":   
-    gen_weixin_article_reproduced(weixin_info_id=5)
+    pass
+    #gen_weixin_article_reproduced(weixin_info_id=5)
 #     search_weixin_article(keyword="吹牛说起大学就预测出微博类的产品会火，比特币刚出来几乎还没什么人知道的时候还挖了")
     #scan_article(openid="oIWsFt-Atb62Noyz4nKX1nvrmFHQ")
     #print search_weixin_info("晓说", True)
-#     article_list_urls = ["http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt21qMCAR53L_nCd27iMBnOs&page=7", ]
-#     print scan_article_list(article_list_urls)
+    #article_list_urls = ["http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt21qMCAR53L_nCd27iMBnOs&page=7", ]
+    print scan_article_list(1, "oIWsFt1fTYO7dqGetWm_AiEkLQsA")
     #print utils.getUrlContent("http://weixin.sogou.com/gzhjs?cb=sogou.weixin.gzhcb&openid=oIWsFt-dFFZ9mZdL2K9OIZBi9oBg&page=32")
 #     import time
 #     print time.time()
