@@ -165,6 +165,12 @@ def scan_article_content(article_urls, weixin_info_id, weixin_name, weixin_no, o
             img["src"]=img["data-src"]
         content = str(soup) 
         weixin_article_id = dbutils.saveWeixinArticle(weixin_info_id, weixin_name, weixin_no, openid, title, url, content, publish_date, "", "")
+        #update gather_weixinarticle SET read_num=ROUND(LENGTH(content)*RAND()/10);
+        #update gather_weixinarticle SET good_num=ROUND(read_num*RAND()/10);
+        import random
+        read_num = random.randint(1, len(content))/10
+        good_num = random.randint(1, read_num)/10
+        dbutils.updateWeixinArticleById(weixin_article_id, read_num=read_num, good_num=good_num)
         count=count+1
         #缩略图
         if hasThumbnail and len(datas)>0:

@@ -62,6 +62,7 @@ class WeixinInfo(models.Model):
     last_scan_date = models.DateTimeField(blank=True, null=True, verbose_name='最近扫描时间')     
     update_num = models.IntegerField(default=0, verbose_name='更新文章数')
     create_date = models.DateTimeField(auto_now_add=True, verbose_name='创建日期')     
+    weixin_sogou_key = models.CharField(max_length=256, verbose_name='搜狗微信KEY')#搜索url中的key
     
     def __unicode__(self):
         return self.weixin_name

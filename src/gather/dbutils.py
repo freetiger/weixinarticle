@@ -112,7 +112,7 @@ def getWeixinArticleMaxPublishDate(weixin_info_id):
     
     return datas[0][0] if len(datas)>0 else None
 
-def updateWeixinArticleById(id, weixin_name=None, weixin_no=None, openid=None, publish_date=None, thumbnail_url=None, thumbnail_path=None, pic_url=None):
+def updateWeixinArticleById(id, weixin_name=None, weixin_no=None, openid=None, publish_date=None, thumbnail_url=None, thumbnail_path=None, pic_url=None, read_num=None, good_num=None):
     updateSql = []
     updateSql.append("UPDATE gather_weixinarticle SET ")
     if weixin_name is not None:
@@ -129,6 +129,10 @@ def updateWeixinArticleById(id, weixin_name=None, weixin_no=None, openid=None, p
         updateSql.append(",thumbnail_path='"+thumbnail_path+"'")
     if pic_url is not None:
         updateSql.append(",pic_url='"+pic_url+"'")
+    if read_num is not None:
+        updateSql.append(",read_num="+str(read_num))
+    if good_num is not None:
+        updateSql.append(",good_num="+str(good_num))
     updateSql.append(" WHERE id="+str(id))
     if len(updateSql)>2:
         if updateSql[1].count(",")>0:
@@ -199,7 +203,7 @@ def getWeixinInfoList(id=None, weixin_name=None, weixin_no=None, openid=None, of
     for data in datas:
         weixinInfo = WeixinInfo()
         weixinInfo.id = data[0]
-        weixinInfo.name = data[1]
+        weixinInfo.weixin_name = data[1]
         weixinInfo.weixin_no = data[2]
         weixinInfo.openid = data[3]
         weixinInfo.last_scan_date = data[4]
